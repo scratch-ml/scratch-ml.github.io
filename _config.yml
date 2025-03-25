@@ -7,8 +7,8 @@ title: ScratchML
 subtitle: ''
 description: ''
 keywords:
-author: ScratchML
-language: zh-Hans
+author: MingliangLi
+language: zh-CN
 timezone: ''
 
 # URL
@@ -40,7 +40,10 @@ external_link:
   exclude: ''
 filename_case: 0
 render_drafts: false
-post_asset_folder: false
+post_asset_folder: true
+marked:
+  prependRoot: true
+  postAsset: true
 relative_link: false
 future: true
 syntax_highlighter: highlight.js
@@ -54,6 +57,10 @@ prismjs:
   preprocess: true
   line_number: true
   tab_replace: ''
+
+auto_excerpt:
+  enable: true
+  length: 150
 
 # Home page setting
 # path: Root path for your blogs index page. (default = '')
@@ -96,7 +103,7 @@ ignore:
 # Extensions
 ## Plugins: https://hexo.io/plugins/
 ## Themes: https://hexo.io/themes/
-theme: melody
+theme: fluid
 
 # Deployment
 ## Docs: https://hexo.io/docs/one-command-deployment
