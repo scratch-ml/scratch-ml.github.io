@@ -27,7 +27,7 @@
 <meta property="og:description" content="李明亮 Education 南京大学 2014&#x2F;09~2018&#x2F;06 学位：本科，计算机科学与技术系   清华大学 2019&#x2F;08~2022&#x2F;06 学位：硕士，软件学院 导师：Prof.Zhenhua Li    Work Experience 小米通讯技术有限公司 2018&#x2F;07~2019&#x2F;08 岗位：Linux 内核开发工程师，手机部">
 <meta property="og:locale" content="zh_CN">
 <meta property="article:published_time" content="2025-03-25T12:44:17.000Z">
-<meta property="article:modified_time" content="2025-03-28T08:21:58.837Z">
+<meta property="article:modified_time" content="2025-03-28T09:15:44.164Z">
 <meta property="article:author" content="MingliangLi">
 <meta name="twitter:card" content="summary_large_image">
   
@@ -325,6 +325,18 @@
 </ul>
 </li>
 </ul>
+<h4 id="Projects"><a href="#Projects" class="headerlink" title="Projects"></a>Projects</h4><h5 id="Model-Inference"><a href="#Model-Inference" class="headerlink" title="Model Inference"></a>Model Inference</h5><ul>
+<li><strong>DRL 模型推理服务开发</strong></li>
+<li><strong>LLM 服务开发与优化</strong></li>
+</ul>
+<h5 id="操作系统"><a href="#操作系统" class="headerlink" title="操作系统"></a>操作系统</h5><ul>
+<li><strong><a target="_blank" rel="noopener" href="https://www.thucloud.com/zhenhua/papers/[MobiCom'20]%20Android%20Not%20Responding.pdf">Android 系统异步 discard 优化</a></strong>：设计了可中断、可恢复的异步discard 策略，使得 ANR(Android Not Responding) 发生率下降 32%、Watchdog 异常发生率降低 46%，相关成果被 MobiCom’20 收录。</li>
+<li><strong><a target="_blank" rel="noopener" href="https://mp.weixin.qq.com/s/C-Cx7wGmwFIiW8ugnBcbRg">k8s 集群千节点启动优化</a></strong>：通过调整限流、预置关键镜像等手段优化链路瓶颈，把 1000 节点并发启动 P90 耗时从 506s 降低至 54s。</li>
+<li><strong>云原生资源管理组件开发</strong>：独立开发 k8s 节点上的资源管理组件，劫持 kubelet 与 Contained 之间的交互请求并进行资源管理与分配，将内核特性透出(如 CPU burst 能力)，提高单机的资源隔离与超卖能力。</li>
+</ul>
+<!-- - **Android 系统异步 discard 优化**：参与ANR/Watchdog问题监控及自动化分析工具研发，定位系统卡顿根源。针对ext4文件系统在闪存实时discard机制的缺陷，设计了可中断、可恢复的异步discard策略，实现ANR发生率下降32%、Watchdog发生率降低46%。成果以第一作者身份发表于计算机领域顶会 MobiCom'20（CCF-A）。
+- **千节点启动优化**：分析 k8s 集群节点高并发启动场景下速度较慢的根因，进行节点级启动优化。通过瓶颈限流调整、探测频率调整、预置关键镜像等手段，将 1000 节点并发启动 P90 耗时从 506s 降低至 54s，上线至超 2w 核 CPU 的业务使用。
+- **云原生资源管理组件开发**：独立开发了 k8s 节点上工作负载的资源管理组件，劫持 kubelet 与 Contained 之间的交互请求，并在关键的 hook 点调用节点资源控制器进行资源管理与分配，将底层内核特性进行透出(如 CPU burst)，提高单机的资源隔离与超卖能力。 -->
 <h4 id="Publications"><a href="#Publications" class="headerlink" title="Publications"></a>Publications</h4><ul>
 <li><em><strong><a target="_blank" rel="noopener" href="https://www.thucloud.com/zhenhua/papers/[MobiCom'20]%20Android%20Not%20Responding.pdf">Aging or Glitching? Why Does Android Stop Responding and What Can We Do About It?</a></strong></em> <em><strong>Mingliang Li</strong></em>, <em>Hao Lin, Cai Liu, Zhenhua Li, Feng Qian3, Yunhao Liu, etc.</em> （<strong>MobiCom</strong>, 2020）</li>
 <li><em><strong><a target="_blank" rel="noopener" href="https://www.thucloud.com/zhenhua/papers/[MM'23]%20ParliRobo.pdf">ParliRobo: Participant Lightweight AI Robots for Massively Multiplayer Online Games (MMOGs)</a></strong></em> <em>Jianwei Zheng, Changnan Xiao, <em><strong>Mingliang Li</strong></em>, Zhenhua Li, Feng Qian, Wei Liu, etc.</em> （<strong>MM</strong>, 2023）</li>
