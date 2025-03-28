@@ -7,7 +7,16 @@ banner_img: /img/cover.jpg
 
 ---
 Stepcast Router 的流量复制功能允许用户在模型服务级别和推理实例级别上复制流量。Router 会去配置中心读取流量复制规则，根据 source 模型服务（或实例）、target 模型服务（或实例）以及流量比例等参数来完成请求的复制、改写适配与分发。这里提供一个 CLI 工具  traffic_copy.py 脚本，通过它来对配置中心的流量规则进行读写，支持创建、更新、获取和删除流量复制规则。
-![doge](a.jpg)
+
+
+<center class ='img'>
+<figure>
+    <img title="DOGE" src="a.jpg" width=300 height=200>
+    <figcaption>肖像</figcaption>
+  </figure>
+</center>
+
+
 
 备注：配置中心的地址是xxx，也可以直接点进这里配置、更新、查看、删除流量规则。
 
@@ -16,7 +25,7 @@ https://github.com/xlite-dev/CUDA-Learn-Notes
 
 <!-- more -->
 
-## Quick Start：：
+## Quick Start
 
 ### Create a new post
 
