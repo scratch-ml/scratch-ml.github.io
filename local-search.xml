@@ -4,19 +4,19 @@
   
   
   <entry>
-    <title>hello-world</title>
+    <title>建站初衷</title>
     <link href="/2025/03/25/hello-world/"/>
     <url>/2025/03/25/hello-world/</url>
     
-    <content type="html"><![CDATA[<p>Stepcast Router 的流量复制功能允许用户在模型服务级别和推理实例级别上复制流量。Router 会去配置中心读取流量复制规则，根据 source 模型服务（或实例）、target 模型服务（或实例）以及流量比例等参数来完成请求的复制、改写适配与分发。这里提供一个 CLI 工具  traffic_copy.py 脚本，通过它来对配置中心的流量规则进行读写，支持创建、更新、获取和删除流量复制规则。</p><center class="img"><figure>    <img title="DOGE" src="/2025/03/25/hello-world/a.jpg" width="300" height="200">    <figcaption>肖像</figcaption>  </figure></center><p>备注：配置中心的地址是xxx，也可以直接点进这里配置、更新、查看、删除流量规则。</p><p><a href="https://github.com/xlite-dev/CUDA-Learn-Notes">https://github.com/xlite-dev/CUDA-Learn-Notes</a></p><span id="more"></span><h2 id="Quick-Start"><a href="#Quick-Start" class="headerlink" title="Quick Start"></a>Quick Start</h2><h3 id="Create-a-new-post"><a href="#Create-a-new-post" class="headerlink" title="Create a new post"></a>Create a new post</h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs bash">$ hexo new <span class="hljs-string">&quot;My New Post&quot;</span><br></code></pre></td></tr></table></figure><p>More info: <a href="https://hexo.io/docs/writing.html">Writing</a></p><h3 id="Run-server"><a href="#Run-server" class="headerlink" title="Run server"></a>Run server</h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs bash">$ hexo server<br></code></pre></td></tr></table></figure><p>More info: <a href="https://hexo.io/docs/server.html">Server</a></p><h3 id="Generate-static-files"><a href="#Generate-static-files" class="headerlink" title="Generate static files"></a>Generate static files</h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs bash">$ hexo generate<br></code></pre></td></tr></table></figure><p>More info: <a href="https://hexo.io/docs/generating.html">Generating</a></p><h3 id="Deploy-to-remote-sites"><a href="#Deploy-to-remote-sites" class="headerlink" title="Deploy to remote sites"></a>Deploy to remote sites</h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs bash">$ hexo deploy<br></code></pre></td></tr></table></figure><p>More info: <a href="https://hexo.io/docs/one-command-deployment.html">Deployment</a></p>]]></content>
+    <content type="html"><![CDATA[<p>现在是2025年3月，我坐在电脑前，想着把创建这个博客网站的初衷写下来，让自己以后能够时刻回头看看，按照预想的那样去经营它。</p><!-- 起到笔记的作用，防止忘记。 --><p>首要原因就是想把它作为一个笔记仓库。作为技术人员，常会遇到各种各样的挑战，比如在项目中踩过的坑、解决过的难题、学习新技术时遇到的困惑。这些经历或者知识随着时间的推移可能会逐渐被淡忘，总让人觉得可惜。通过写博客，希望能将这些经验系统地整理和记录下来，一方面能帮助自己加深理解，另一方面也是为了在未来遇到类似问题时能快速找到解决方案。</p><!-- 记录个人思考，写下来，反复雕琢说服自己。 --><p>此外，我希望在这个网站里多多记录自己的想法，并反复雕琢完善它们。RL 之父 Sutton 老爷子对研究人员有过这样的建议：“If you want others to care about what you think, then start by caring yourself. Get a notebook, write your thoughts down, challenge them, and develop them into something worth sharing.”所以，我希望自己能坚持写下去，记录自己的想法，并思考它们、挑战它们，让它们变得更好。</p><center class="img"><figure>    <img title="RL 之父 Sutton 的建议" src="/2025/03/25/hello-world/sutton.png" width="450" height="450">    <figcaption>RL 之父 Sutton 的建议</figcaption>  </figure></center><!-- 个人展示。 -->同时，博客也是一个展示自我的平台。在这里，我会专注于大模型推理领域，包括但不限于 LLM 推理服务、LLM 推理引擎或框架的开发与优化，分享在大模型推理领域的认知与见解。通过这些分享，期待与更多志同道合的朋友交流和互动，拓宽自己的视野，并在这个过程中不断提升自己的能力。如果您对我感兴趣，可以通过<a href="mailto:limingliang0527@gmail.com">我的邮箱</a>联系。<br><br><p>最后，我也希望在这个网站上可以不只记录技术上的看法，也能分享生活上的点滴。很多事情，只有记录下来才能更好地被记住；也只有记录下来，才能在回顾的时候体会到当时的感受。在这里分享一篇很喜欢的文章：</p><blockquote><p><strong>记承天寺夜游</strong> 苏轼<br>元丰六年十月十二日夜，解衣欲睡，月色入户，欣然起行。念无与为乐者，遂至承天寺寻张怀民。怀民亦未寝，相与步于中庭。<br>庭下如积水空明，水中藻荇交横，盖竹柏影也。何夜无月？何处无竹柏？但少闲人如吾两人者耳。</p></blockquote>]]></content>
     
     
     
     <tags>
       
-      <tag>Hexo</tag>
+      <tag>随笔</tag>
       
-      <tag>Fluid</tag>
+      <tag>生活</tag>
       
     </tags>
     
