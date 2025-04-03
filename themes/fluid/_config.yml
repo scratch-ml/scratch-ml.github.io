@@ -369,7 +369,7 @@ navbar:
   menu:
     - { key: "home", link: "/", icon: "iconfont icon-home-fill" }
     - { key: "archive", link: "/archives/", icon: "iconfont icon-archive-fill" }
-    - { key: "category", link: "/categories/", icon: "iconfont icon-category-fill" }
+    # - { key: "category", link: "/categories/", icon: "iconfont icon-category-fill" }
     - { key: "tag", link: "/tags/", icon: "iconfont icon-tags-fill" }
     - { key: "about", link: "/about/", icon: "iconfont icon-user-fill" }
     - { key: "links", link: "/links/", icon: "iconfont icon-link-fill" }
@@ -555,7 +555,7 @@ index:
 #---------------------------
 post:
   banner_img: /img/default.png
-  banner_img_height: 40
+  banner_img_height: 30
   banner_mask_alpha: 0.3
 
   # 文章在首页的默认封面图，当没有指定 index_img 时会使用该图片，若两者都为空则不显示任何图片
@@ -919,7 +919,7 @@ discuss:
 #---------------------------
 archive:
   banner_img: /img/default.png
-  banner_img_height: 40
+  banner_img_height: 30
   banner_mask_alpha: 0.3
 
 
@@ -930,7 +930,7 @@ archive:
 category:
   enable: true
   banner_img: /img/default.png
-  banner_img_height: 40
+  banner_img_height: 30
   banner_mask_alpha: 0.3
 
   # 分类的排序字段，前面带减号是倒序，不带减号是正序
@@ -959,7 +959,7 @@ category:
 tag:
   enable: true
   banner_img: /img/default.png
-  banner_img_height: 40
+  banner_img_height: 30
   banner_mask_alpha: 0.3
   tagcloud:
     min_font: 15
@@ -976,11 +976,11 @@ tag:
 about:
   enable: true
   banner_img: /img/default.png
-  banner_img_height: 40
+  banner_img_height: 30
   banner_mask_alpha: 0.3
-  avatar: /img/avatar.png
+  avatar: /img/cover.jpg
   name: "Mingliang Li"
-  intro: "Mingliang Li's Blog"
+  intro: "It's not a sprint, it's a marathon."
   # 更多图标可从 https://hexo.fluid-dev.com/docs/icon/ 查找，`class` 代表图标的 css class，添加 `qrcode` 后，图标不再是链接而是悬浮二维码
   # More icons can be found from https://hexo.fluid-dev.com/docs/en/icon/  `class` is the css class of the icon. If adding `qrcode`, the icon is no longer a link, but a hovering QR code
   icons:
@@ -998,7 +998,7 @@ about:
 #---------------------------
 page:
   banner_img: /img/default.png
-  banner_img_height: 40
+  banner_img_height: 30
   banner_mask_alpha: 0.3
 
 
@@ -1009,7 +1009,7 @@ page:
 page404:
   enable: true
   banner_img: /img/default.png
-  banner_img_height: 40
+  banner_img_height: 30
   banner_mask_alpha: 0.3
   # 重定向到首页的延迟(毫秒)
   # Delay in redirecting to home page (milliseconds)
@@ -1021,32 +1021,32 @@ page404:
 # Links Page
 #---------------------------
 links:
-  enable: true
+  enable: false
   banner_img: /img/default.png
-  banner_img_height: 40
+  banner_img_height: 30
   banner_mask_alpha: 0.3
   # 友链的成员项
   # Member item of page
-  items:
-    - {
-      title: "Fluid Blog",
-      intro: "主题博客",
-      link: "https://hexo.fluid-dev.com/",
-      avatar: "/img/favicon.png"
-    }
-    - {
-      title: "Fluid Docs",
-      intro: "主题使用指南",
-      link: "https://hexo.fluid-dev.com/docs/",
-      avatar: "/img/favicon.png"
-    }
-    - {
-      title: "Fluid Repo",
-      intro: "主题 GitHub 仓库",
-      link: "https://github.com/fluid-dev/hexo-theme-fluid",
-      avatar: "/img/favicon.png"
-    }
-
+  # items:
+  #   - {
+  #     title: "Fluid Blog",
+  #     intro: "主题博客",
+  #     link: "https://hexo.fluid-dev.com/",
+  #     avatar: "/img/favicon.png"
+  #   }
+  #   - {
+  #     title: "Fluid Docs",
+  #     intro: "主题使用指南",
+  #     link: "https://hexo.fluid-dev.com/docs/",
+  #     avatar: "/img/favicon.png"
+  #   }
+  #   - {
+  #     title: "Fluid Repo",
+  #     intro: "主题 GitHub 仓库",
+  #     link: "https://github.com/fluid-dev/hexo-theme-fluid",
+  #     avatar: "/img/favicon.png"
+  #   }
+  # 当成
   # 当成员头像加载失败时，替换为指定图片
   # When the member avatar fails to load, replace the specified image
   onerror_avatar: /img/avatar.png
@@ -1054,8 +1054,16 @@ links:
   # 友链下方自定义区域，支持 HTML，可插入例如申请友链的文字
   # Custom content at the bottom of the links
   custom:
-    enable: false
-    content: '<hr><p>在下方留言申请加入我的友链，按如下格式提供信息：</p><ul><li>博客名：Fluid</li><li>简介：Fluid 主题官方博客</li><li>链接：https://hexo.fluid-dev.com</li><li>图片：https://hexo.fluid-dev.com/img/favicon.png</li></ul>'
+    enable: true
+    content: |
+      <hr>
+      <p>在下方留言申请加入我的友链，按如下格式提供信息：</p>
+      <ul>
+        <li>博客名：Fluid</li>
+        <li>简介：Fluid 主题官方博客</li>
+        <li>链接：https://hexo.fluid-dev.com</li>
+        <li>图片：https://hexo.fluid-dev.com/img/favicon.png</li>
+      </ul>
 
   # 评论插件
   # Comment plugin

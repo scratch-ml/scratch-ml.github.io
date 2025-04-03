@@ -5,6 +5,7 @@ npm install -g hexo-cli
 npm install hexo-asset-image --save
 npm install hexo-renderer-marked --save
 npm install hexo-asset-image-for-hexo5 --save
+npm install hexo-all-minifier --save
 ```
 
 安装主题

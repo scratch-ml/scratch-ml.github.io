@@ -1,60 +1,31 @@
 ---
-title: hello-world
+title: 建站初衷
 date: 2025-03-25 17:33:41
-tags: [Hexo, Fluid]
-index_img: /img/cover.jpg
-banner_img: /img/cover.jpg
-
+tags: [随笔, 生活]
+index_img: /img/sutton.png
 ---
-Stepcast Router 的流量复制功能允许用户在模型服务级别和推理实例级别上复制流量。Router 会去配置中心读取流量复制规则，根据 source 模型服务（或实例）、target 模型服务（或实例）以及流量比例等参数来完成请求的复制、改写适配与分发。这里提供一个 CLI 工具  traffic_copy.py 脚本，通过它来对配置中心的流量规则进行读写，支持创建、更新、获取和删除流量复制规则。
+现在是2025年3月，我坐在电脑前，想着把创建这个网站的初衷简单地写下来，让自己以后能够时刻回头看看，按照预想的那样去经营它。
 
+<!-- 起到笔记的作用，防止忘记。 -->
+
+首先，我希望把它作为一个笔记仓库。作为技术人员，经常会遇到各种挑战，比如项目中踩过的坑、解决过的难题，以及学习新技术时的困惑。如果不把这些经历或知识记录下来，随着时间的推移可能会被遗忘，这很让人觉得可惜。通过写博客能系统地整理和记录这些经验，这样不仅能加深对相关知识的理解，也能在未来遇到类似问题时快速找到解决方案。
+
+
+<!-- 记录个人思考，写下来，反复雕琢说服自己。 -->
+
+此外，我期待在这个网站上多记录自己的想法，并不断完善它们。RL 之父 Sutton 曾建议研究人员：“If you want others to care about what you think, then start by caring yourself. Get a notebook, write your thoughts down, challenge them, and develop them into something worth sharing.”因此，我希望自己能坚持写下去，记录并思考这些想法，通过不断地挑战它们，让它们变得更好。
 
 <center class ='img'>
 <figure>
-    <img title="DOGE" src="a.jpg" width=300 height=200>
-    <figcaption>肖像</figcaption>
+    <img title="RL 之父 Sutton 的建议" src="sutton.png" width=450 height=450>
+    <figcaption>RL 之父 Sutton 的建议</figcaption>
   </figure>
 </center>
+<!-- 个人展示。 -->
+同时，我希望把这个网站作为一个展示自我的平台。在这里，我会专注于大模型推理领域，包括但不限于 LLM 推理服务、LLM 推理引擎或框架的开发与优化，分享我在这个领域的认知与见解。通过这些分享，期待与更多志同道合的朋友交流和互动，拓宽自己的视野，并在这个过程中不断提升自己的能力。如果您对我感兴趣，可以通过<a href="mailto:limingliang0527@gmail.com">我的邮箱</a>联系。<br><br>
 
+最后，我也期待在这个网站上可以不只记录技术上的看法，也能分享生活上的点滴。很多事情，只有记录下来才能更好地被记住；也只有记录下来，才能在回顾的时候体会到当时的感受。在这里分享一篇我很喜欢的散文：
 
-
-备注：配置中心的地址是xxx，也可以直接点进这里配置、更新、查看、删除流量规则。
-
-
-https://github.com/xlite-dev/CUDA-Learn-Notes
-
-<!-- more -->
-
-## Quick Start
-
-### Create a new post
-
-``` bash
-$ hexo new "My New Post"
-```
-
-More info: [Writing](https://hexo.io/docs/writing.html)
-
-### Run server
-
-``` bash
-$ hexo server
-```
-
-More info: [Server](https://hexo.io/docs/server.html)
-
-### Generate static files
-
-``` bash
-$ hexo generate
-```
-
-More info: [Generating](https://hexo.io/docs/generating.html)
-
-### Deploy to remote sites
-
-``` bash
-$ hexo deploy
-```
-
-More info: [Deployment](https://hexo.io/docs/one-command-deployment.html)
+> **记承天寺夜游** --苏轼
+> 元丰六年十月十二日夜，解衣欲睡，月色入户，欣然起行。念无与为乐者，遂至承天寺寻张怀民。怀民亦未寝，相与步于中庭。
+> 庭下如积水空明，水中藻荇交横，盖竹柏影也。何夜无月？何处无竹柏？但少闲人如吾两人者耳。
