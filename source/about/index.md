@@ -4,7 +4,7 @@ layout: about
 date: 2025-03-25 20:44:17
 ---
 #### 关于博主
-目前，我在大模型初创公司阶跃星辰担任研发工程师，从事大模型推理服务开发、推理框架开发等工作，并将专注于这一领域，持续提升自己在大模型推理方向的技术能力。在此之前，我以全职员工的身份在小米、阿里巴巴分别工作过一段时间，从事操作系统研发工作；也在字节跳动以研究实习生的身份工作近两年，从事 DRL 模型推理服务开发、推理 SDK 开发、DRL 训练框架开发与优化等工作。
+目前，我在大模型初创公司**阶跃星辰**担任研发总监，从事大模型推理服务、推理框架开发和优化工作，并将专注于这一领域，持续提升自己在 LLM Inference 方向的技术能力。在此之前，我曾以全职员工的身份在小米、阿里巴巴分别工作过一段时间，从事操作系统研发工作；也在字节跳动以研究实习生的身份工作近两年，从事 DRL 模型推理服务开发、推理 SDK 开发、DRL 训练框架开发与优化等工作。
 #### Education
 - **南京大学** *2014/09~2018/06*
   - **学位**：本科，计算机科学与技术系
@@ -29,7 +29,7 @@ date: 2025-03-25 20:44:17
 - **DRL 模型推理服务开发**
 - **LLM 服务开发与优化**
 ##### 操作系统
-- **[Android 系统异步 discard 优化](https://www.thucloud.com/zhenhua/papers/[MobiCom'20]%20Android%20Not%20Responding.pdf)**：设计了可中断、可恢复的异步discard 策略，使得 ANR(Android Not Responding) 发生率下降 32%、Watchdog 异常发生率降低 46%，相关成果被 MobiCom'20 收录。
+- **[Android 系统异步 discard 优化](https://www.thucloud.com/zhenhua/papers/[MobiCom'20]%20Android%20Not%20Responding.pdf)**：参与 ANR(Android Not Responding)/Watchdog 异常监控及自动化分析工具的研发，定位应用、系统卡顿的根源。并针对 ext4 文件系统在闪存实时 discard 机制的缺陷，设计了可中断、可恢复的异步 discard 策略，使得 ANR 发生率下降 32%、Watchdog 异常发生率降低 46%，相关成果被 MobiCom'20 收录，本人为第一作者。
 - **[k8s 集群千节点启动优化](https://mp.weixin.qq.com/s/C-Cx7wGmwFIiW8ugnBcbRg)**：分析 k8s 集群高并发启动节点下速度较慢的瓶颈，通过调整限流、预置关键镜像等手段优化链路瓶颈，把千节点并发启动 P90 耗时从 506s 降低至 54s。
 - **云原生资源管理组件开发**：独立开发 k8s 节点上的资源管理组件，劫持 kubelet 与 Contained 之间的交互请求并进行资源管理与分配，将内核特性透出(如 CPU burst 能力)，提高单机的资源隔离与超卖能力。
 
