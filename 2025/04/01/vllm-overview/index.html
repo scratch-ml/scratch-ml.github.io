@@ -27,7 +27,7 @@
 <meta property="og:description" content="vLLM 技术架构与实现深度解析1. 简介随着大语言模型（LLM）在各个领域的广泛应用，模型服务部署中的性能瓶颈日益凸显。主要挑战包括推理延迟高、显存利用率低、并发处理能力受限等问题。vLLM（Versatile Large Language Model）应运而生，作为高性能 LLM 推理引擎，它为这些关键问题提供了创新的解决方案。vLLM 在推理速度提升 2-3 倍的同时，显著降低了显存占用。根">
 <meta property="og:locale" content="zh_CN">
 <meta property="article:published_time" content="2025-04-01T12:17:23.000Z">
-<meta property="article:modified_time" content="2025-04-14T15:49:05.413Z">
+<meta property="article:modified_time" content="2025-04-14T15:50:14.962Z">
 <meta property="article:author" content="MingliangLi">
 <meta property="article:tag" content="LLM">
 <meta property="article:tag" content="性能优化">
@@ -280,7 +280,7 @@
                 
                 <h1 id="vLLM-技术架构与实现深度解析"><a href="#vLLM-技术架构与实现深度解析" class="headerlink" title="vLLM 技术架构与实现深度解析"></a>vLLM 技术架构与实现深度解析</h1><h2 id="1-简介"><a href="#1-简介" class="headerlink" title="1. 简介"></a>1. 简介</h2><p>随着大语言模型（LLM）在各个领域的广泛应用，模型服务部署中的性能瓶颈日益凸显。主要挑战包括推理延迟高、显存利用率低、并发处理能力受限等问题。vLLM（Versatile Large Language Model）应运而生，作为高性能 LLM 推理引擎，它为这些关键问题提供了创新的解决方案。vLLM 在推理速度提升 2-3 倍的同时，显著降低了显存占用。根据 <a target="_blank" rel="noopener" href="https://arxiv.org/abs/2309.06180">vLLM 论文</a> 所声明的，这种性能提升主要源于三个技术创新：</p>
 <ol>
-<li>PagedAttention 技术：创新性地将操作系统的内存分页概念应用于 LLM 推理，实现了高效的显存管理机制</li>
+<li>PagedAttention 技术：把操作系统的内存分页概念应用于 LLM 推理，实现了高效的显存管理机制</li>
 <li>连续批处理系统：采用动态请求聚合和智能调度策略，优化了并发请求的处理效率</li>
 <li>分布式计算架构：支持灵活的模型部署方案，适应不同规模的硬件环境和计算需求</li>
 </ol>
