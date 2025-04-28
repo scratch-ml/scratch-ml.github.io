@@ -26,13 +26,15 @@
 <meta property="og:site_name" content="ScratchML">
 <meta property="og:description" content="vLLM 技术架构与实现深度解析1. 简介随着大语言模型（LLM）在各个领域的广泛应用，模型服务部署中的性能瓶颈日益凸显。主要挑战包括推理延迟高、显存利用率低、并发处理能力受限等问题。vLLM 应运而生，作为高性能 LLM 推理引擎，它为这些关键问题提供了创新的解决方案。vLLM 在推理速度提升 2-3 倍的同时，显著降低了显存占用。根据 vLLM 论文 所声明的，这种性能提升主要源于三个技术创新">
 <meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://scratch-ml.github.io/2025/04/01/vllm-overview/frag.png">
 <meta property="article:published_time" content="2025-04-01T12:17:23.000Z">
-<meta property="article:modified_time" content="2025-04-28T16:24:01.374Z">
+<meta property="article:modified_time" content="2025-04-28T16:37:48.789Z">
 <meta property="article:author" content="MingliangLi">
 <meta property="article:tag" content="LLM">
 <meta property="article:tag" content="性能优化">
 <meta property="article:tag" content="推理加速">
 <meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image" content="https://scratch-ml.github.io/2025/04/01/vllm-overview/frag.png">
   
   
   
@@ -236,7 +238,7 @@
         
         
         
-          14 分钟
+          15 分钟
         
       </span>
     
@@ -295,14 +297,21 @@
 
 <h2 id="2-核心特性"><a href="#2-核心特性" class="headerlink" title="2. 核心特性"></a>2. 核心特性</h2><h3 id="2-1-PagedAttention-机制"><a href="#2-1-PagedAttention-机制" class="headerlink" title="2.1 PagedAttention 机制"></a>2.1 PagedAttention 机制</h3><!-- #### 2.1.1 传统 KV Cache 的问题 -->
 <p>PagedAttention 是 vLLM 的核心创新，它通过将操作系统的内存分页思想引入到 LLM 推理过程中，改变了 KV Cache 的管理方式。</p>
-<p>标准的 Transformer 解码过程中，模型需要为每个正在生成的 Sequence 分配一块<strong>连续的显存空间</strong>，用于存储该 Sequence 历史所有 token 的 Key 和 Value（即 KV Cache）。随着推理过程中 Sequence 长度的不断增长，KV Cache 也会线性扩展。如果有多个用户并发请求，每个请求的 Sequence 长度和生命周期都不同，显存中会出现大量“空洞”——即部分已分配但暂未使用或已释放的空间无法被及时复用，造成显存碎片化。下面我将举例说明碎片的产生及其种类：</p>
+<p>标准的 Transformer 解码过程中，模型需要为每个正在生成的 Sequence 分配一块<strong>连续的显存空间</strong>，用于存储该 Sequence 历史所有 token 的 Key 和 Value（即 KV Cache）。随着推理过程中 Sequence 长度的不断增长，KV Cache 也会线性扩展。如果有多个用户并发请求，每个请求的 Sequence 长度和生命周期都不同，显存中会出现大量”空洞”——即部分已分配但暂未使用或已释放的空间无法被及时复用，造成显存碎片化。下面我将举例说明碎片的产生及其种类：</p>
 <ul>
-<li><p><strong>内部碎片</strong>：在LLM 服务系统中，为了满足未来可能增长的需求，通常为请求预留一个大块连续显存（例如最大 2048 tokens）。但实际上请求可能只用了一部分，例如只用了 300 tokens，这就导致剩下的那部分未被使用的显存浪费了，这种现象就部碎片。</p>
+<li><p><strong>内部碎片</strong>：在LLM 服务系统中，为了满足未来可能增长的需求，通常为请求预留一个大块连续显存（例如最大 2048 tokens）。但实际上请求可能只用了一部分，例如只用了 300 tokens，这就导致剩下的那部分未被使用的显存浪费了，这种已被分配但未被使用的显存称为内部碎片。</p>
 </li>
-<li><p><strong>外部碎片</strong>：外部碎片是指未被分配出去的小块显存空间零散地分布在整体显存中，无法有效利用，即使总空闲显存量看起来很多，但因为不连续，无法满足新请求对一大块连续内存的需求。例如，请求一释放了 500 个 token 的空间，请求二释放了 300 个，但来了一个需要 1000 个 token 空间的新请求时，尽管总有 800 空闲，但由于它们不连续，仍然无法满足新请求。</p>
+<li><p><strong>外部碎片</strong>：外部碎片是指未被分配出去的小块显存空间零散地分布在整体显存中，无法有效利用，即使总空闲显存量看起来很多，但因为不连续，无法满足新请求对一大块连续内存的需求。例如，请求 1 释放了 500 个 token 的空间，请求 2 释放了 300 个 tokens 的空间，但来了一个需要 1000 个 token 空间的新请求时，尽管总有 800 空闲，但由于它们不连续，仍然无法满足新请求。</p>
 </li>
 </ul>
-<p>在这里需要澄清一个概念，PagedAttention 并不是一个全新的注意力机制，而是对传统 KV Cache 管理方式的改进。它通过引入操作系统的分页机制，将 KV Cache 划分为固定大小的块（页），每个块可独立分配和释放，并通过 Block Table 记录每个 Sequence 的块分配，实现逻辑连续但物理离散的高效显存管理。同时，系统维护 Sequence 到 blocks 的映射关系，利用高效索引结构支持数据的快速定位和动态扩展，从而显著提升了多用户并发场景下的显存利用率和访问效率。</p>
+<center class="img">
+<figure>
+    <img title="碎片化显存示意图" src="/2025/04/01/vllm-overview/frag.png" srcset="/img/loading.gif" lazyload width="500" height="300">
+    <figcaption class="image-caption">碎片化显存示意图</figcaption>
+  </figure>
+</center>
+
+<p>为了解决上述显存碎片化严重的问题，提高显存利用率或者说相同显存下支持更多的并发请求，vLLM 引入了 PagedAttention 机制。 PagedAttention 通过引入操作系统的分页机制，将 KV Cache 划分为固定大小的块（页），每个块可独立分配和释放，并通过 Block Table 记录每个 Sequence 的块分配，实现逻辑连续但物理离散的高效显存管理。同时，系统维护 Sequence 到 blocks 的映射关系，利用高效索引结构支持数据的快速定位和动态扩展，从而显著提升了多用户并发场景下的显存利用率和访问效率。另外，在这里需要澄清一个概念，<strong>PagedAttention 并不是一个全新的注意力机制，而是对传统 KV Cache 管理方式的改进</strong>。</p>
 <p>关键技术实现</p>
 <ol>
 <li><strong>块分配策略</strong><figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><code class="hljs python"><span class="hljs-comment"># 简化的块分配示意代码</span><br><span class="hljs-keyword">class</span> <span class="hljs-title class_">BlockAllocator</span>:<br>    <span class="hljs-keyword">def</span> <span class="hljs-title function_">allocate</span>(<span class="hljs-params">self, num_tokens</span>):<br>        num_blocks = (num_tokens + BLOCK_SIZE - <span class="hljs-number">1</span>) // BLOCK_SIZE<br>        blocks = <span class="hljs-variable language_">self</span>.free_blocks[:num_blocks]<br>        <span class="hljs-variable language_">self</span>.free_blocks = <span class="hljs-variable language_">self</span>.free_blocks[num_blocks:]<br>        <span class="hljs-keyword">return</span> blocks<br></code></pre></td></tr></table></figure></li>
