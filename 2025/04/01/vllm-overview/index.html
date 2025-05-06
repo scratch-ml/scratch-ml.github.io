@@ -27,8 +27,9 @@
 <meta property="og:description" content="vLLM 技术架构与实现深度解析1. 简介随着大语言模型（LLM）在各个领域的广泛应用，模型服务部署中的性能瓶颈日益凸显。主要挑战包括推理延迟高、显存利用率低、并发处理能力受限等问题。vLLM 应运而生，作为高性能 LLM 推理引擎，它为这些关键问题提供了创新的解决方案。vLLM 在推理速度提升 2-3 倍的同时，显著降低了显存占用。根据 vLLM 论文 所声明的，这种性能提升主要源于三个技术创新">
 <meta property="og:locale" content="zh_CN">
 <meta property="og:image" content="https://scratch-ml.github.io/2025/04/01/vllm-overview/frag.png">
+<meta property="og:image" content="https://scratch-ml.github.io/2025/04/01/vllm-overview/blocktable.png">
 <meta property="article:published_time" content="2025-04-01T12:17:23.000Z">
-<meta property="article:modified_time" content="2025-04-28T17:03:27.718Z">
+<meta property="article:modified_time" content="2025-05-06T05:42:32.980Z">
 <meta property="article:author" content="MingliangLi">
 <meta property="article:tag" content="LLM">
 <meta property="article:tag" content="性能优化">
@@ -227,7 +228,7 @@
       <span class="post-meta mr-2">
         <i class="iconfont icon-chart"></i>
         
-          1.7k 字
+          1.9k 字
         
       </span>
     
@@ -238,7 +239,7 @@
         
         
         
-          15 分钟
+          16 分钟
         
       </span>
     
@@ -283,7 +284,7 @@
                 <h1 id="vLLM-技术架构与实现深度解析"><a href="#vLLM-技术架构与实现深度解析" class="headerlink" title="vLLM 技术架构与实现深度解析"></a>vLLM 技术架构与实现深度解析</h1><h2 id="1-简介"><a href="#1-简介" class="headerlink" title="1. 简介"></a>1. 简介</h2><p>随着大语言模型（LLM）在各个领域的广泛应用，模型服务部署中的性能瓶颈日益凸显。主要挑战包括推理延迟高、显存利用率低、并发处理能力受限等问题。vLLM 应运而生，作为高性能 LLM 推理引擎，它为这些关键问题提供了创新的解决方案。vLLM 在推理速度提升 2-3 倍的同时，显著降低了显存占用。根据 <a target="_blank" rel="noopener" href="https://arxiv.org/abs/2309.06180">vLLM 论文</a> 所声明的，这种性能提升主要源于三个技术创新：</p>
 <ul>
 <li>PagedAttention 技术：把操作系统的内存分页概念应用于 LLM 推理，实现了高效的显存管理机制</li>
-<li>连续批处理系统：采用动态请求聚合和智能调度策略，优化了并发请求的处理效率</li>
+<li>Continuous Batching 处理系统：采用动态请求聚合和智能调度策略，优化了并发请求的处理效率</li>
 <li>分布式计算架构：支持灵活的模型部署方案，适应不同规模的硬件环境和计算需求</li>
 </ul>
 <p>本文将深入探讨 vLLM 的技术架构、核心组件实现以及最佳实践，并将详细分析其性能优化原理，以帮助读者更好地理解 vLLM 的架构概览。</p>
@@ -312,22 +313,15 @@
 </center>
 
 <p>为了解决上述显存碎片化严重的问题，提高显存利用率或者说相同显存下支持更多的并发请求，vLLM 引入了 PagedAttention 机制。 PagedAttention 通过引入操作系统的分页机制，将 KV Cache 划分为固定大小的块（页），每个块可独立分配和释放，并通过 Block Table 记录每个 Sequence 的块分配，实现逻辑连续但物理离散的高效显存管理。同时，系统维护 Sequence 到 blocks 的映射关系，利用高效索引结构支持数据的快速定位和动态扩展，从而显著提升了多用户并发场景下的显存利用率和访问效率。另外，在这里需要澄清一个概念，<strong>PagedAttention 并不是一个全新的注意力机制，而是对传统 KV Cache 管理方式的改进</strong>。</p>
-<p>关键技术实现</p>
-<ol>
-<li><strong>块分配策略</strong><figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><code class="hljs python"><span class="hljs-comment"># 简化的块分配示意代码</span><br><span class="hljs-keyword">class</span> <span class="hljs-title class_">BlockAllocator</span>:<br>    <span class="hljs-keyword">def</span> <span class="hljs-title function_">allocate</span>(<span class="hljs-params">self, num_tokens</span>):<br>        num_blocks = (num_tokens + BLOCK_SIZE - <span class="hljs-number">1</span>) // BLOCK_SIZE<br>        blocks = <span class="hljs-variable language_">self</span>.free_blocks[:num_blocks]<br>        <span class="hljs-variable language_">self</span>.free_blocks = <span class="hljs-variable language_">self</span>.free_blocks[num_blocks:]<br>        <span class="hljs-keyword">return</span> blocks<br></code></pre></td></tr></table></figure></li>
-<li><strong>注意力计算优化</strong><ul>
-<li>将传统的连续注意力计算转换为基于块的计算</li>
-<li>支持跨块的高效访问</li>
-<li>实现了计算和访问的局部性优化</li>
-</ul>
-</li>
-<li><strong>内存回收机制</strong><ul>
-<li>基于引用计数的自动内存回收</li>
-<li>支持细粒度的内存释放</li>
-<li>实现了高效的内存复用</li>
-</ul>
-</li>
-</ol>
+<center class="img">
+<figure>
+    <img title="PagedAttention 显存管理示意图" src="/2025/04/01/vllm-overview/blocktable.png" srcset="/img/loading.gif" lazyload width="650" height="300">
+    <figcaption class="image-caption">PagedAttention 显存管理示意图</figcaption>
+  </figure>
+</center>
+
+
+<p>此外，vLLM 还支持 KV Cache 共享（KV Cache Sharing），即在多样本生成、beam search 等场景下，多个输出序列可以共享公共部分的 KV Cache，从而显著节省内存，提高并发处理能力。以 beam search 场景为例，给定输入 prompt，模型会首先生成第一个 token 的概率分布。选出概率最高的前 k 个 token（k 即 beam size），每个 token 作为一个“束”（beam）的起点，形成 k 个候选序列，对于每个候选序列，模型再次预测下一个 token 的概率分布,同样选出累计概率最高的前 k 个。重复上述扩展和筛选过程，直到所有 beam 都生成了终止符（如 <eos>），或达到最大长度，最终可以输出 top-k 个序列，供下游任务选择。而这些候选序列的 KV Cache 可以共享公共部分，从而显著节省内存，提高并发处理能力。</eos></p>
 <p>通过这种创新的内存管理方式，PagedAttention 不仅解决了传统 KV Cache 管理的痛点，还带来了显著的性能提升。它的成功实现使得 vLLM 能够在有限的硬件资源下支持更多的并发请求，成为大规模 LLM 服务部署的重要技术基础。</p>
 <h3 id="2-2-调度系统"><a href="#2-2-调度系统" class="headerlink" title="2.2 调度系统"></a>2.2 调度系统</h3><p>vLLM 的调度系统负责管理和优化推理请求：</p>
 <ul>
