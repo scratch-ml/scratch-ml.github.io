@@ -8,7 +8,7 @@
     <link href="/2025/04/15/basics-of-deep-learning/"/>
     <url>/2025/04/15/basics-of-deep-learning/</url>
     
-    <content type="html"><![CDATA[]]></content>
+    <content type="html"><![CDATA[<h2 id="CNN"><a href="#CNN" class="headerlink" title="CNN"></a>CNN</h2><ul><li>卷积层：提取图像特征</li><li>池化层：降维、防止过拟合金</li><li>全连接层：输出结果</li></ul><h2 id="Attention"><a href="#Attention" class="headerlink" title="Attention"></a>Attention</h2><p>注意力机制是一种让模型能够关注输入序列中最重要部分的机制。就像我们看一张图时，会重点关注图中的某些突出部分，而不是全部，注意力机制就是这样把有限的注意力集中在重点信息上。</p><p>在注意力机制（尤其是 Transformer 的自注意力机制）中，key、value、query 的维度如下：</p><ul><li>假设输入特征维度为 $d_{model}$，则：<ul><li>Query（Q）维度：$d_{model} \times d_k$</li><li>Key（K）维度：$d_{model} \times d_k$</li><li>Value（V）维度：$d_{model} \times d_v$</li></ul></li><li>一般 $d_k &#x3D; d_v &#x3D; d_{model} &#x2F; \text{head数}$（多头注意力时）</li></ul><p>输入 $X$ 通过三个不同的线性变换分别得到 Q、K、V：</p><p>$$<br>Q &#x3D; XW^Q, \quad K &#x3D; XW^K, \quad V &#x3D; XW^V<br>$$</p><ul><li>$W^Q$ 形状为 $d_{model} \times d_k$</li><li>$W^K$ 形状为 $d_{model} \times d_k$</li><li>$W^V$ 形状为 $d_{model} \times d_v$</li></ul><h2 id="Transformer"><a href="#Transformer" class="headerlink" title="Transformer"></a>Transformer</h2><p>Transformer 是一种基于注意力机制的神经网络架构，它通过自注意力机制来处理序列数据。</p><h2 id><a href="#" class="headerlink" title></a></h2>]]></content>
     
     
     
