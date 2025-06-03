@@ -21,19 +21,19 @@
   
     <meta name="description" content="CNN 卷积层：提取图像特征 池化层：降维、防止过拟合金 全连接层：输出结果  Attention注意力机制是一种让模型能够关注输入序列中最重要部分的机制。就像我们看一张图时，会重点关注图中的某些突出部分，而不是全部，注意力机制就是这样把有限的注意力集中在重点信息上。 在注意力机制（尤其是 Transformer 的自注意力机制）中，key、value、query 的维度如下：  假设输入特征维度">
 <meta property="og:type" content="article">
-<meta property="og:title" content="basics-of-deep-learning">
+<meta property="og:title" content="深度学习基础">
 <meta property="og:url" content="https://scratch-ml.github.io/2025/04/15/basics-of-deep-learning/index.html">
 <meta property="og:site_name" content="ScratchML">
 <meta property="og:description" content="CNN 卷积层：提取图像特征 池化层：降维、防止过拟合金 全连接层：输出结果  Attention注意力机制是一种让模型能够关注输入序列中最重要部分的机制。就像我们看一张图时，会重点关注图中的某些突出部分，而不是全部，注意力机制就是这样把有限的注意力集中在重点信息上。 在注意力机制（尤其是 Transformer 的自注意力机制）中，key、value、query 的维度如下：  假设输入特征维度">
 <meta property="og:locale" content="zh_CN">
 <meta property="article:published_time" content="2025-04-14T16:41:01.000Z">
-<meta property="article:modified_time" content="2025-05-30T09:49:30.560Z">
+<meta property="article:modified_time" content="2025-05-30T10:26:36.540Z">
 <meta property="article:author" content="MingliangLi">
 <meta name="twitter:card" content="summary_large_image">
   
   
   
-  <title>basics-of-deep-learning - ScratchML</title>
+  <title>深度学习基础 - ScratchML</title>
 
   <link  rel="stylesheet" href="https://lib.baomitu.com/twitter-bootstrap/4.6.1/css/bootstrap.min.css" />
 
@@ -199,7 +199,7 @@
       <div class="banner-text text-center fade-in-up">
         <div class="h2">
           
-            <span id="subtitle">basics-of-deep-learning</span>
+            <span id="subtitle">深度学习基础</span>
           
         </div>
 
@@ -222,7 +222,7 @@
       <span class="post-meta mr-2">
         <i class="iconfont icon-chart"></i>
         
-          278 字
+          563 字
         
       </span>
     
@@ -233,7 +233,7 @@
         
         
         
-          3 分钟
+          5 分钟
         
       </span>
     
@@ -270,7 +270,7 @@
       <div class="container nopadding-x-md" id="board-ctn">
         <div id="board">
           <article class="post-content mx-auto">
-            <h1 id="seo-header">basics-of-deep-learning</h1>
+            <h1 id="seo-header">深度学习基础</h1>
             
             
               <div class="markdown-body">
@@ -298,6 +298,28 @@
 <li>$W^K$ 形状为 $d_{model} \times d_k$</li>
 <li>$W^V$ 形状为 $d_{model} \times d_v$</li>
 </ul>
+<h3 id="d-k-（Key-Query-的维度）"><a href="#d-k-（Key-Query-的维度）" class="headerlink" title="$d_k$（Key&#x2F;Query 的维度）"></a>$d_k$（Key&#x2F;Query 的维度）</h3><ul>
+<li>$d_k$ 是 Key（K）和 Query（Q）向量的维度。</li>
+<li>在计算注意力分数（即 Q 和 K 的点积）时，Q 和 K 必须有相同的维度 $d_k$。</li>
+<li>$d_k$ 的大小影响注意力分数的分布，通常设置为 $d_{model}&#x2F;\text{head数}$（多头注意力时，每个头分配一部分维度）。</li>
+</ul>
+<h3 id="d-v-（Value-的维度）"><a href="#d-v-（Value-的维度）" class="headerlink" title="$d_v$（Value 的维度）"></a>$d_v$（Value 的维度）</h3><ul>
+<li>$d_v$ 是 Value（V）向量的维度。</li>
+<li>在加权求和得到注意力输出时，输出的每个向量的维度就是 $d_v$。</li>
+<li>$d_v$ 通常也设置为 $d_{model}&#x2F;\text{head数}$，但理论上可以和 $d_k$ 不同。</li>
+</ul>
+<p><strong>总结：</strong></p>
+<ul>
+<li>$d_k$：决定了 Q、K 的维度，影响注意力分数的计算。</li>
+<li>$d_v$：决定了 V 的维度，影响最终注意力输出的特征维度。</li>
+</ul>
+<p>在大语言模型（LLM，如 GPT、BERT 等）中，输入 $X$ 的维度通常为 $(\text{batch_size}, \text{seq_len}, d_{model})$，其中：</p>
+<ul>
+<li>$\text{batch_size}$：批大小，一次输入的样本数量</li>
+<li>$\text{seq_len}$：每个样本的序列长度（如 token 数）</li>
+<li>$d_{model}$：每个 token 的特征维度（如 embedding size）</li>
+</ul>
+<p>例如，若 $\text{batch_size}&#x3D;2$，$\text{seq_len}&#x3D;5$，$d_{model}&#x3D;768$，则 $X$ 的形状为 $(2, 5, 768)$。</p>
 <h2 id="Transformer"><a href="#Transformer" class="headerlink" title="Transformer"></a>Transformer</h2><p>Transformer 是一种基于注意力机制的神经网络架构，它通过自注意力机制来处理序列数据。</p>
 <h2 id><a href="#" class="headerlink" title></a></h2>
                 
@@ -316,7 +338,7 @@
 
   <div class="license-box my-3">
     <div class="license-title">
-      <div>basics-of-deep-learning</div>
+      <div>深度学习基础</div>
       <div>https://scratch-ml.github.io/2025/04/15/basics-of-deep-learning/</div>
     </div>
     <div class="license-meta">
@@ -423,6 +445,12 @@
 
 
   
+
+
+  
+  
+
+
 
 
 
@@ -600,6 +628,49 @@
 
 
   <script>Fluid.plugins.imageCaption();</script>
+
+  
+      <script>
+        if (!window.MathJax) {
+          window.MathJax = {
+            tex    : {
+              inlineMath: { '[+]': [['$', '$']] }
+            },
+            loader : {
+              load: ['ui/lazy']
+            },
+            options: {
+              renderActions: {
+                insertedScript: [200, () => {
+                  document.querySelectorAll('mjx-container').forEach(node => {
+                    let target = node.parentNode;
+                    if (target.nodeName.toLowerCase() === 'li') {
+                      target.parentNode.classList.add('has-jax');
+                    }
+                  });
+                }, '', false]
+              }
+            }
+          };
+        } else {
+          MathJax.startup.document.state(0);
+          MathJax.texReset();
+          MathJax.typeset();
+          MathJax.typesetPromise();
+        }
+
+        Fluid.events.registerRefreshCallback(function() {
+          if ('MathJax' in window && MathJax.startup.document && typeof MathJax.startup.document.state === 'function') {
+            MathJax.startup.document.state(0);
+            MathJax.texReset();
+            MathJax.typeset();
+            MathJax.typesetPromise();
+          }
+        });
+      </script>
+    
+
+  <script  src="https://lib.baomitu.com/mathjax/3.2.2/es5/tex-mml-chtml.js" ></script>
 
   <script  src="/js/local-search.js" ></script>
 
