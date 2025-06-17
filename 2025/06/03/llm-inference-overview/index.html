@@ -19,21 +19,21 @@
   <meta name="author" content="MingliangLi">
   <meta name="keywords" content="">
   
-    <meta name="description" content="Attention注意力机制是一种让模型能够关注输入序列中最重要部分的机制。就像我们看一张图时，会重点关注图中的某些突出部分，而不是全部，注意力机制就是这样把有限的注意力集中在重点信息上。注意力机制主要由三个关键组件构成：  Query（查询）：表示当前需要关注的内容 Key（键）：用于与Query进行匹配，计算相关性 Value（值）：包含实际的信息内容  在注意力机制（尤其是 Transfor">
+    <meta name="description" content="一. 算法创新 (Algorithmic Innovations)1. 解码算法 (Decoding Algorithm)1.1 非自回归解码 (Non-autoregressive Decoding)1.2 投机采样解码 (Speculative Decoding)1.3 提前退出 (Early Exiting)1.4 级联推理 (Cascade Inference)2. 模型结构设计 (Mod">
 <meta property="og:type" content="article">
-<meta property="og:title" content="深度学习基础">
-<meta property="og:url" content="https://scratch-ml.github.io/2025/04/15/basics-of-deep-learning/index.html">
+<meta property="og:title" content="llm-inference-overview">
+<meta property="og:url" content="https://scratch-ml.github.io/2025/06/03/llm-inference-overview/index.html">
 <meta property="og:site_name" content="ScratchML">
-<meta property="og:description" content="Attention注意力机制是一种让模型能够关注输入序列中最重要部分的机制。就像我们看一张图时，会重点关注图中的某些突出部分，而不是全部，注意力机制就是这样把有限的注意力集中在重点信息上。注意力机制主要由三个关键组件构成：  Query（查询）：表示当前需要关注的内容 Key（键）：用于与Query进行匹配，计算相关性 Value（值）：包含实际的信息内容  在注意力机制（尤其是 Transfor">
+<meta property="og:description" content="一. 算法创新 (Algorithmic Innovations)1. 解码算法 (Decoding Algorithm)1.1 非自回归解码 (Non-autoregressive Decoding)1.2 投机采样解码 (Speculative Decoding)1.3 提前退出 (Early Exiting)1.4 级联推理 (Cascade Inference)2. 模型结构设计 (Mod">
 <meta property="og:locale" content="zh_CN">
-<meta property="article:published_time" content="2025-04-14T16:41:01.000Z">
-<meta property="article:modified_time" content="2025-06-16T17:04:43.503Z">
+<meta property="article:published_time" content="2025-06-03T15:13:31.000Z">
+<meta property="article:modified_time" content="2025-06-16T16:26:06.945Z">
 <meta property="article:author" content="MingliangLi">
 <meta name="twitter:card" content="summary_large_image">
   
   
   
-  <title>深度学习基础 - ScratchML</title>
+  <title>llm-inference-overview - ScratchML</title>
 
   <link  rel="stylesheet" href="https://lib.baomitu.com/twitter-bootstrap/4.6.1/css/bootstrap.min.css" />
 
@@ -199,7 +199,7 @@
       <div class="banner-text text-center fade-in-up">
         <div class="h2">
           
-            <span id="subtitle">深度学习基础</span>
+            <span id="subtitle">llm-inference-overview</span>
           
         </div>
 
@@ -210,8 +210,8 @@
     
       <span class="post-meta">
         <i class="iconfont icon-date-fill" aria-hidden="true"></i>
-        <time datetime="2025-04-15 00:41" pubdate>
-          2025年4月15日 凌晨
+        <time datetime="2025-06-03 23:13" pubdate>
+          2025年6月3日 晚上
         </time>
       </span>
     
@@ -222,7 +222,7 @@
       <span class="post-meta mr-2">
         <i class="iconfont icon-chart"></i>
         
-          1.5k 字
+          201 字
         
       </span>
     
@@ -233,7 +233,7 @@
         
         
         
-          13 分钟
+          2 分钟
         
       </span>
     
@@ -270,156 +270,12 @@
       <div class="container nopadding-x-md" id="board-ctn">
         <div id="board">
           <article class="post-content mx-auto">
-            <h1 id="seo-header">深度学习基础</h1>
+            <h1 id="seo-header">llm-inference-overview</h1>
             
             
               <div class="markdown-body">
                 
-                <h2 id="Attention"><a href="#Attention" class="headerlink" title="Attention"></a>Attention</h2><p>注意力机制是一种让模型能够关注输入序列中最重要部分的机制。就像我们看一张图时，会重点关注图中的某些突出部分，而不是全部，注意力机制就是这样把有限的注意力集中在重点信息上。注意力机制主要由三个关键组件构成：</p>
-<ol>
-<li>Query（查询）：表示当前需要关注的内容</li>
-<li>Key（键）：用于与Query进行匹配，计算相关性</li>
-<li>Value（值）：包含实际的信息内容</li>
-</ol>
-<p>在注意力机制（尤其是 Transformer 的自注意力机制）中，key、value、query 的维度如下：</p>
-<ul>
-<li>假设输入特征维度为 $d_{model}$，则：<ul>
-<li>Query（Q）维度：$d_{model} \times d_k$</li>
-<li>Key（K）维度：$d_{model} \times d_k$</li>
-<li>Value（V）维度：$d_{model} \times d_v$</li>
-</ul>
-</li>
-<li>一般 $d_k &#x3D; d_v &#x3D; d_{model} &#x2F; \text{head数}$（多头注意力时）</li>
-</ul>
-<blockquote>
-<p>注意：</p>
-<ul>
-<li>输入特征维度（$d_{model}$）：这是每个词被表示成向量后的维度，例如768维的向量，意味着每个词可以用768个数字来表示。这些数字共同编码了词的语义、语法等各种特征。</li>
-<li>词表大小（Vocabulary Size）：这是模型能够识别的不同词的数量，例如BERT的词表大小是30,000个词，GPT-3的词表大小是50,000个词。</li>
-<li>举个例子：假设我们有一个词”猫”，在词表中，它可能被分配一个编号，比如1234，但这个编号会被转换成一个768维的向量，比如[0.1, -0.3, 0.5, …]（共768个数字），这个向量包含了”猫”这个词的各种语义信息。</li>
-</ul>
-</blockquote>
-<p>输入 $X$ 通过三个不同的线性变换分别得到 Q、K、V：<br>$$<br>Q &#x3D; XW^Q, \quad K &#x3D; XW^K, \quad V &#x3D; XW^V<br>$$</p>
-<ul>
-<li>$W^Q$ 形状为 $d_{model} \times d_k$</li>
-<li>$W^K$ 形状为 $d_{model} \times d_k$</li>
-<li>$W^V$ 形状为 $d_{model} \times d_v$</li>
-</ul>
-<h3 id="d-model"><a href="#d-model" class="headerlink" title="$d_{model}$"></a>$d_{model}$</h3><ul>
-<li>$d_{model}$ 是输入特征的维度，指输入特征的每个 token 的特征维度。</li>
-<li>在 Transformer 中，$d_{model}$ 通常设置为 768。在 LLM 中，$d_{model}$ 通常设置为 4096，例如llama3.1-70b, llama3.1-405b, d_{model}&#x3D;4096。</li>
-</ul>
-<h3 id="d-k-（Key-Query-的维度）"><a href="#d-k-（Key-Query-的维度）" class="headerlink" title="$d_k$（Key&#x2F;Query 的维度）"></a>$d_k$（Key&#x2F;Query 的维度）</h3><ul>
-<li>$d_k$ 是 Key（K）和 Query（Q）向量的维度。</li>
-<li>在计算注意力分数（即 Q 和 K 的点积）时，Q 和 K 必须有相同的维度 $d_k$。</li>
-<li>$d_k$ 的大小影响注意力分数的分布，通常设置为 $d_{model}&#x2F;\text{head数}$（多头注意力时，每个头分配一部分维度）。</li>
-</ul>
-<h3 id="d-v-（Value-的维度）"><a href="#d-v-（Value-的维度）" class="headerlink" title="$d_v$（Value 的维度）"></a>$d_v$（Value 的维度）</h3><ul>
-<li>$d_v$ 是 Value（V）向量的维度。</li>
-<li>在加权求和得到注意力输出时，输出的每个向量的维度就是 $d_v$。</li>
-<li>$d_v$ 通常也设置为 $d_{model}&#x2F;\text{head数}$，但理论上可以和 $d_k$ 不同。</li>
-</ul>
-<p><strong>总结：</strong></p>
-<ul>
-<li>$d_k$：决定了 Q、K 的维度，影响注意力分数的计算。</li>
-<li>$d_v$：决定了 V 的维度，影响最终注意力输出的特征维度。</li>
-</ul>
-<p>在大语言模型（LLM，如 GPT、BERT 等）中，输入 $X$ 的维度通常为 $(\text{batch_size}, \text{seq_len}, d_{model})$，其中：</p>
-<ul>
-<li>$\text{batch_size}$：批大小，一次输入的样本数量</li>
-<li>$\text{seq_len}$：每个样本的序列长度（如 token 数）</li>
-<li>$d_{model}$：每个 token 的特征维度（如 embedding size）</li>
-</ul>
-<p>例如，若 $\text{batch_size}&#x3D;2$，$\text{seq_len}&#x3D;5$，$d_{model}&#x3D;768$，则 $X$ 的形状为 $(2, 5, 768)$。</p>
-<h3 id="注意力机制的计算过程"><a href="#注意力机制的计算过程" class="headerlink" title="注意力机制的计算过程"></a>注意力机制的计算过程</h3><p>注意力机制的核心计算过程可以分为以下几个步骤：</p>
-<ol>
-<li><p><strong>计算注意力分数（Attention Scores）</strong></p>
-<ul>
-<li>通过 Query 和 Key 的点积计算相关性分数：<br>$$<br>\text{Attention Scores} &#x3D; QK^T<br>$$</li>
-<li>得到的分数矩阵维度为 $(\text{batch_size}, \text{seq_len}, \text{seq_len})$</li>
-<li>每个 batch 中的分数矩阵维度为 $(\text{seq_len}, \text{seq_len})$</li>
-<li>每个分数表示 Query 和 Key 之间的相关性</li>
-</ul>
-</li>
-<li><p><strong>缩放（Scaling）</strong></p>
-<ul>
-<li>为了防止点积结果过大导致 softmax 梯度消失，需要对分数进行缩放：<br>$$<br>\text{Scaled Scores} &#x3D; \frac{QK^T}{\sqrt{d_k}}<br>$$</li>
-<li>除以 $\sqrt{d_k}$ 是为了使方差保持在合理范围内</li>
-</ul>
-</li>
-<li><p><strong>Softmax 归一化</strong></p>
-<ul>
-<li>对缩放后的分数应用 softmax 函数，将分数转换为概率分布：<br>$$<br>\text{Attention Weights} &#x3D; \text{softmax}(\frac{QK^T}{\sqrt{d_k}})<br>$$</li>
-<li>确保所有权重和为 1，且都是非负数</li>
-</ul>
-</li>
-<li><p><strong>加权求和</strong></p>
-<ul>
-<li>使用注意力权重对 Value 进行加权求和：<br>$$<br>\text{Output} &#x3D; \text{Attention Weights} \cdot V<br>$$</li>
-<li>最终输出维度为 $(\text{seq_len}, d_v)$</li>
-</ul>
-</li>
-</ol>
-<h3 id="多头注意力机制（Multi-Head-Attention）"><a href="#多头注意力机制（Multi-Head-Attention）" class="headerlink" title="多头注意力机制（Multi-Head Attention）"></a>多头注意力机制（Multi-Head Attention）</h3><p>多头注意力机制允许模型同时关注不同位置的不同特征：</p>
-<ol>
-<li><p><strong>并行计算</strong></p>
-<ul>
-<li>将输入分成多个头（heads）</li>
-<li>每个头独立计算注意力</li>
-<li>最后将所有头的结果拼接</li>
-</ul>
-</li>
-<li><p><strong>计算过程</strong></p>
-<ul>
-<li>假设有 $h$ 个头，每个头的维度为 $d_k &#x3D; d_v &#x3D; d_{model}&#x2F;h$</li>
-<li>对每个头 $i$：<br>$$<br>\text{head}_i &#x3D; \text{Attention}(QW_i^Q, KW_i^K, VW_i^V)<br>$$</li>
-<li>将所有头的结果拼接：<br>$$<br>\text{MultiHead}(Q, K, V) &#x3D; \text{Concat}(\text{head}_1, …, \text{head}_h)W^O<br>$$</li>
-<li>其中 $W^O$ 是输出投影矩阵</li>
-</ul>
-</li>
-</ol>
-<h3 id="注意力机制的优势"><a href="#注意力机制的优势" class="headerlink" title="注意力机制的优势"></a>注意力机制的优势</h3><ol>
-<li><p><strong>并行计算</strong></p>
-<ul>
-<li>不同于 RNN 需要顺序计算，注意力机制可以并行处理所有位置</li>
-<li>大大提高了计算效率</li>
-</ul>
-</li>
-<li><p><strong>长距离依赖</strong></p>
-<ul>
-<li>可以直接建立任意两个位置之间的关联</li>
-<li>解决了 RNN 难以处理长距离依赖的问题</li>
-</ul>
-</li>
-<li><p><strong>可解释性</strong></p>
-<ul>
-<li>注意力权重可以直观地显示模型关注的重点</li>
-<li>有助于理解模型的决策过程</li>
-</ul>
-</li>
-<li><p><strong>灵活性</strong></p>
-<ul>
-<li>可以处理变长序列</li>
-<li>支持不同类型的输入（文本、图像等）</li>
-</ul>
-</li>
-</ol>
-<h3 id="实际应用示例"><a href="#实际应用示例" class="headerlink" title="实际应用示例"></a>实际应用示例</h3><p>以机器翻译为例，当翻译”我喜欢猫”到英文时：</p>
-<ol>
-<li>Query 代表当前要翻译的词</li>
-<li>Key 和 Value 代表源语言中的每个词</li>
-<li>注意力机制会计算当前词与源语言中每个词的相关性</li>
-<li>根据相关性权重，从源语言中提取最相关的信息</li>
-<li>最终生成对应的英文翻译</li>
-</ol>
-<p>这种机制使得模型能够：</p>
-<ul>
-<li>准确捕捉词与词之间的对应关系</li>
-<li>处理词序不同的语言对</li>
-<li>保持翻译的准确性和流畅性</li>
-</ul>
-<h2 id="Transformer"><a href="#Transformer" class="headerlink" title="Transformer"></a>Transformer</h2><p>Transformer 是一种基于注意力机制的神经网络架构，它通过自注意力机制来处理序列数据。</p>
-
+                <h1 id="一-算法创新-Algorithmic-Innovations"><a href="#一-算法创新-Algorithmic-Innovations" class="headerlink" title="一. 算法创新 (Algorithmic Innovations)"></a>一. 算法创新 (Algorithmic Innovations)</h1><h2 id="1-解码算法-Decoding-Algorithm"><a href="#1-解码算法-Decoding-Algorithm" class="headerlink" title="1. 解码算法 (Decoding Algorithm)"></a>1. 解码算法 (Decoding Algorithm)</h2><h3 id="1-1-非自回归解码-Non-autoregressive-Decoding"><a href="#1-1-非自回归解码-Non-autoregressive-Decoding" class="headerlink" title="1.1 非自回归解码 (Non-autoregressive Decoding)"></a>1.1 非自回归解码 (Non-autoregressive Decoding)</h3><h3 id="1-2-投机采样解码-Speculative-Decoding"><a href="#1-2-投机采样解码-Speculative-Decoding" class="headerlink" title="1.2 投机采样解码 (Speculative Decoding)"></a>1.2 投机采样解码 (Speculative Decoding)</h3><h3 id="1-3-提前退出-Early-Exiting"><a href="#1-3-提前退出-Early-Exiting" class="headerlink" title="1.3 提前退出 (Early Exiting)"></a>1.3 提前退出 (Early Exiting)</h3><h3 id="1-4-级联推理-Cascade-Inference"><a href="#1-4-级联推理-Cascade-Inference" class="headerlink" title="1.4 级联推理 (Cascade Inference)"></a>1.4 级联推理 (Cascade Inference)</h3><h2 id="2-模型结构设计-Model-Architecture-Design"><a href="#2-模型结构设计-Model-Architecture-Design" class="headerlink" title="2. 模型结构设计 (Model Architecture Design)"></a>2. 模型结构设计 (Model Architecture Design)</h2><h3 id="2-1-配置缩减-Config-Downsizing"><a href="#2-1-配置缩减-Config-Downsizing" class="headerlink" title="2.1 配置缩减 (Config Downsizing)"></a>2.1 配置缩减 (Config Downsizing)</h3><h3 id="2-2-注意力简化-Attention-Simplification"><a href="#2-2-注意力简化-Attention-Simplification" class="headerlink" title="2.2 注意力简化 (Attention Simplification)"></a>2.2 注意力简化 (Attention Simplification)</h3><h3 id="2-3-循环单元-Recurrent-Unit"><a href="#2-3-循环单元-Recurrent-Unit" class="headerlink" title="2.3 循环单元 (Recurrent Unit)"></a>2.3 循环单元 (Recurrent Unit)</h3><h3 id="2-4-激活共享-Activation-Sharing"><a href="#2-4-激活共享-Activation-Sharing" class="headerlink" title="2.4 激活共享 (Activation Sharing)"></a>2.4 激活共享 (Activation Sharing)</h3><h3 id="2-5-条件计算-Conditional-Computing"><a href="#2-5-条件计算-Conditional-Computing" class="headerlink" title="2.5 条件计算 (Conditional Computing)"></a>2.5 条件计算 (Conditional Computing)</h3><h2 id="3-模型压缩-Model-Compression"><a href="#3-模型压缩-Model-Compression" class="headerlink" title="3. 模型压缩 (Model Compression)"></a>3. 模型压缩 (Model Compression)</h2><h3 id="3-1-知识蒸馏-Knowledge-Distillation"><a href="#3-1-知识蒸馏-Knowledge-Distillation" class="headerlink" title="3.1 知识蒸馏 (Knowledge Distillation)"></a>3.1 知识蒸馏 (Knowledge Distillation)</h3><h3 id="3-2-网络剪枝-Network-Pruning"><a href="#3-2-网络剪枝-Network-Pruning" class="headerlink" title="3.2 网络剪枝 (Network Pruning)"></a>3.2 网络剪枝 (Network Pruning)</h3><h1 id="二-系统优化-System-Optimizations"><a href="#二-系统优化-System-Optimizations" class="headerlink" title="二. 系统优化 (System Optimizations)"></a>二. 系统优化 (System Optimizations)</h1><h2 id="1-低比特量化-Low-bit-Quantization"><a href="#1-低比特量化-Low-bit-Quantization" class="headerlink" title="1. 低比特量化 (Low-bit Quantization)"></a>1. 低比特量化 (Low-bit Quantization)</h2><h2 id="2-并行计算-Parallel-Computation"><a href="#2-并行计算-Parallel-Computation" class="headerlink" title="2. 并行计算 (Parallel Computation)"></a>2. 并行计算 (Parallel Computation)</h2><h3 id="2-1-模型并行-Model-Parallelism"><a href="#2-1-模型并行-Model-Parallelism" class="headerlink" title="2.1 模型并行 (Model Parallelism)"></a>2.1 模型并行 (Model Parallelism)</h3><h3 id="2-2-去中心化推理-Decentralized-Inference"><a href="#2-2-去中心化推理-Decentralized-Inference" class="headerlink" title="2.2 去中心化推理 (Decentralized Inference)"></a>2.2 去中心化推理 (Decentralized Inference)</h3><h2 id="3-内存管理-Memory-Management"><a href="#3-内存管理-Memory-Management" class="headerlink" title="3. 内存管理 (Memory Management)"></a>3. 内存管理 (Memory Management)</h2><h2 id="4-请求调度-Request-Scheduling"><a href="#4-请求调度-Request-Scheduling" class="headerlink" title="4. 请求调度 (Request Scheduling)"></a>4. 请求调度 (Request Scheduling)</h2><h2 id="5-内核优化-Kernel-Optimizations"><a href="#5-内核优化-Kernel-Optimizations" class="headerlink" title="5. 内核优化 (Kernel Optimizations)"></a>5. 内核优化 (Kernel Optimizations)</h2><h3 id="5-1-算子融合-Operator-Fusion"><a href="#5-1-算子融合-Operator-Fusion" class="headerlink" title="5.1 算子融合 (Operator Fusion)"></a>5.1 算子融合 (Operator Fusion)</h3><h3 id="5-2-定制注意力-Tailored-Attention"><a href="#5-2-定制注意力-Tailored-Attention" class="headerlink" title="5.2 定制注意力 (Tailored Attention)"></a>5.2 定制注意力 (Tailored Attention)</h3><h3 id="5-3-采样优化-Sampling-Optimization"><a href="#5-3-采样优化-Sampling-Optimization" class="headerlink" title="5.3 采样优化 (Sampling Optimization)"></a>5.3 采样优化 (Sampling Optimization)</h3><h3 id="5-4-可变序列长度-Variable-Sequence-Length"><a href="#5-4-可变序列长度-Variable-Sequence-Length" class="headerlink" title="5.4 可变序列长度 (Variable Sequence Length)"></a>5.4 可变序列长度 (Variable Sequence Length)</h3><h3 id="5-5-自动编译-Automatic-Compilation"><a href="#5-5-自动编译-Automatic-Compilation" class="headerlink" title="5.5 自动编译 (Automatic Compilation)"></a>5.5 自动编译 (Automatic Compilation)</h3>
                 
               </div>
             
@@ -436,8 +292,8 @@
 
   <div class="license-box my-3">
     <div class="license-title">
-      <div>深度学习基础</div>
-      <div>https://scratch-ml.github.io/2025/04/15/basics-of-deep-learning/</div>
+      <div>llm-inference-overview</div>
+      <div>https://scratch-ml.github.io/2025/06/03/llm-inference-overview/</div>
     </div>
     <div class="license-meta">
       
@@ -449,7 +305,7 @@
       
         <div class="license-meta-item license-meta-date">
           <div>发布于</div>
-          <div>2025年4月15日</div>
+          <div>2025年6月3日</div>
         </div>
       
       
@@ -481,9 +337,9 @@
                   <article class="post-prev col-6">
                     
                     
-                      <a href="/2025/06/03/llm-inference-overview/" title="llm-inference-overview">
+                      <a href="/2025/06/05/notebook/" title="notebook">
                         <i class="iconfont icon-arrowleft"></i>
-                        <span class="hidden-mobile">llm-inference-overview</span>
+                        <span class="hidden-mobile">notebook</span>
                         <span class="visible-mobile">上一篇</span>
                       </a>
                     
@@ -491,8 +347,8 @@
                   <article class="post-next col-6">
                     
                     
-                      <a href="/2025/04/01/vllm-overview/" title="vLLM 技术架构与实现深度解析">
-                        <span class="hidden-mobile">vLLM 技术架构与实现深度解析</span>
+                      <a href="/2025/04/15/basics-of-deep-learning/" title="深度学习基础">
+                        <span class="hidden-mobile">深度学习基础</span>
                         <span class="visible-mobile">下一篇</span>
                         <i class="iconfont icon-arrowright"></i>
                       </a>
