@@ -2,13 +2,13 @@
 title: vLLM 技术架构与实现深度解析
 date: 2025-04-01 20:17:23
 tags: [LLM, 性能优化, 推理加速]
-hide: true
+
 ---
 
 # vLLM 技术架构与实现深度解析
 
 ## 1. 简介
-随着大语言模型（LLM）在各个领域的广泛应用，模型服务部署中的性能瓶颈日益凸显。主要挑战包括推理延迟高、显存利用率低、并发处理能力受限等问题。vLLM 应运而生，作为高性能 LLM 推理引擎，它为这些关键问题提供了创新的解决方案。vLLM 在推理速度提升 2-3 倍的同时，显著降低了显存占用。根据 [vLLM 论文](https://arxiv.org/abs/2309.06180) 所声明的，这种性能提升主要源于三个技术创新：
+随着大语言模型（LLM）在各个领域的广泛应用，模型服务部署中的性能瓶颈日益凸显。主要挑战包括推理延迟高、显存利用率低、并发处理能力受限等问题。vLLM 应运而生，作为高性能 LLM 推理引擎，它为这些关键问题提供了创新的解决方案。vLLM 在推理速度提升 2-3 倍的同时，显著降低了显存占用。根据 [vLLM 论文](https://arxiv.org/abs/2309.06180) 所 claim 的，这种性能提升主要源于三个技术创新：
 - PagedAttention 技术：把操作系统的内存分页概念应用于 LLM 推理，实现了高效的显存管理机制
 - Continuous Batching 处理系统：采用动态请求聚合和智能调度策略，优化了并发请求的处理效率
 - 分布式计算架构：支持灵活的模型部署方案，适应不同规模的硬件环境和计算需求
@@ -36,7 +36,7 @@ PagedAttention 是 vLLM 的核心创新，它通过将操作系统的内存分�
 - **外部碎片**：外部碎片是指未被分配出去的小块显存空间零散地分布在整体显存中，无法有效利用，即使总空闲显存量看起来很多，但因为不连续，无法满足新请求对一大块连续内存的需求。例如，请求 1 释放了 500 个 token 的空间，请求 2 释放了 300 个 tokens 的空间，但来了一个需要 1000 个 token 空间的新请求时，尽管总有 800 空闲，但由于它们不连续，仍然无法满足新请求。
 <center class ='img'>
 <figure>
-    <img title="碎片化显存示意图" src="frag.png" width=500 height=300>
+    <img title="碎片化显存示意图" src="https://cdn.jsdelivr.net/gh/scratch-ml/scratch-ml.github.io@main/source/_posts/vllm-overview/frag.png" width=500 height=300>
     <figcaption class="image-caption">不同LLM serving system 中碎片化显存示意图</figcaption>
   </figure>
 </center>
@@ -45,7 +45,7 @@ PagedAttention 是 vLLM 的核心创新，它通过将操作系统的内存分�
 
 <center class ='img'>
 <figure>
-    <img title="PagedAttention 显存管理示意图" src="blocktable.png" width=650 height=300>
+    <img title="PagedAttention 显存管理示意图" src="https://cdn.jsdelivr.net/gh/scratch-ml/scratch-ml.github.io@main/source/_posts/vllm-overview/blocktable.png" width=650 height=300>
     <figcaption class="image-caption">PagedAttention 显存管理示意图</figcaption>
   </figure>
 </center>

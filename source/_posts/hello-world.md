@@ -18,7 +18,7 @@ draft: true
 
 <center class ='img'>
 <figure>
-    <img title="RL 之父 Sutton 的建议" src="sutton.png" width=450 height=450>
+    <img title="RL 之父 Sutton 的建议" src="https://cdn.jsdelivr.net/gh/scratch-ml/scratch-ml.github.io@main/source/_posts/hello-world/sutton.png" width=450 height=450>
     <figcaption>RL 之父 Sutton 的建议</figcaption>
   </figure>
 </center>

@@ -3,9 +3,31 @@ title: LLM 推理计算详解
 date: 2025-06-17 00:28:00
 tags: [LLM, Inference, Computation, Deep Learning]
 draft: true
-# hide: true
+hide: true
 ---
 
 
+# cs336 talk2
+### 在 1024 张 H100 上训练一个 70B 参数的模型，总共灌进去 15 T tokens，需要多久？
 
-<math xmlns="http://www.w3.org/1998/Math/MathML" display="block"> <menclose notation="bottom" data-padding="0"> <mtable columnalign="center center" columnspacing="1em" rowspacing="4pt" rowlines="solid none none none" frame=""> <mtr> <mtd> <mtext>array</mtext> </mtd> <mtd> <mtext>shape</mtext> </mtd> </mtr> <mtr> <mtd> <mi>x</mi> </mtd> <mtd> <mtext>[P]</mtext> </mtd> </mtr> <mtr> <mtd> <mi>y</mi> </mtd> <mtd> <mtext>[P]</mtext> </mtd> </mtr> <mtr> <mtd> <mi>A</mi> </mtd> <mtd> <mtext>[N P]</mtext> </mtd> </mtr> <mtr> <mtd> <mi>B</mi> </mtd> <mtd> <mtext>[P M]</mtext> </mtd> </mtr> </mtable> </menclose> </math>
+total_flops = 6 * 70e9 * 15e12  #这里的 6 来自于哪里？
+assert h100_flop_per_sec == 1979e12/2
+mfu = 0.5
+flops_per_day = h100_flop_per_sec * mfu * 1024 * 24 * 3600
+days = total_flops / flops_per_day
+
+143.9 days
+
+
+### 基于 AdamW 在 8*H100 上最大可以训练多大的模型？
+h100_bytes = 80e9
+bytes_per_parameter = 4 + 4 + (4 + 4) # parameter + gradient + optimizer state
+num_parameters = 8 * 80e9 / bytes_per_parameter
+
+40B parameters（注意：这里为考虑 activation 的显存占用，因为和 batch size 和 seq length 有关）
+
+
+
+
+
+

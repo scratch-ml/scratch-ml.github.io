@@ -11,6 +11,8 @@ date: 2025-03-28 18:06:55
 
 - <a href="https://stanford-cs336.github.io/spring2025/" style="color: #6495ed; text-decoration: underline;"><strong>CS336: Deep Learning for Natural Language Processing</strong></a>，Stanford 2025 春季课程
 
+- <a href="https://www.thonking.ai/" style="color: #6495ed; text-decoration: underline;"><strong>Thonking AI</strong></a>，GPU 相关优质博客
+
 ### Books
 
 - <a href="https://zh-v2.d2l.ai/" style="color: #6495ed; text-decoration: underline;"><strong>动手学习深度学习-李沐</strong></a>，DL 入门手册
