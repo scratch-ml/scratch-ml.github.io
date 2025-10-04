@@ -1,0 +1,1183 @@
+
+
+<!DOCTYPE html>
+<html lang="zh-CN" data-default-color-scheme=auto>
+
+
+
+<head>
+  <meta charset="UTF-8">
+
+  <link rel="apple-touch-icon" sizes="76x76" href="/img/fluid.png">
+  <link rel="icon" href="/img/fluid.png">
+  
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, shrink-to-fit=no">
+  <meta http-equiv="x-ua-compatible" content="ie=edge">
+  
+  <meta name="theme-color" content="#2f4154">
+  <meta name="author" content="MingliangLi">
+  <meta name="keywords" content="">
+  
+    <meta name="description" content="深度学习模型量化技术详解1. 量化技术概述与基础原理1.1 量化技术简介模型量化（Quantization）是深度学习模型压缩和加速的核心技术之一。随着大型语言模型（LLM）和其他深度学习模型规模的快速增长，模型部署面临着存储空间、计算资源和推理延迟的严峻挑战。量化技术通过降低模型权重和激活值的数值精度，在保持模型性能的同时显著减少内存占用和计算开销。 量化过程的核心是建立高精度数值表示与低精度数">
+<meta property="og:type" content="article">
+<meta property="og:title" content="深度学习模型量化技术详解">
+<meta property="og:url" content="https://scratch-ml.github.io/2025/08/25/quantization/index.html">
+<meta property="og:site_name" content="ScratchML">
+<meta property="og:description" content="深度学习模型量化技术详解1. 量化技术概述与基础原理1.1 量化技术简介模型量化（Quantization）是深度学习模型压缩和加速的核心技术之一。随着大型语言模型（LLM）和其他深度学习模型规模的快速增长，模型部署面临着存储空间、计算资源和推理延迟的严峻挑战。量化技术通过降低模型权重和激活值的数值精度，在保持模型性能的同时显著减少内存占用和计算开销。 量化过程的核心是建立高精度数值表示与低精度数">
+<meta property="og:locale" content="zh_CN">
+<meta property="article:published_time" content="2025-08-25T12:30:00.000Z">
+<meta property="article:modified_time" content="2025-09-23T16:55:53.499Z">
+<meta property="article:author" content="MingliangLi">
+<meta property="article:tag" content="量化">
+<meta property="article:tag" content="深度学习">
+<meta property="article:tag" content="模型优化">
+<meta property="article:tag" content="推理加速">
+<meta name="twitter:card" content="summary_large_image">
+  
+  
+  
+  <title>深度学习模型量化技术详解 - ScratchML</title>
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/twitter-bootstrap/4.6.1/css/bootstrap.min.css" />
+
+
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/github-markdown-css/4.0.0/github-markdown.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/hint.css/2.7.0/hint.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.css" />
+
+
+
+<!-- 主题依赖的图标库，不要自行修改 -->
+<!-- Do not modify the link that theme dependent icons -->
+
+<link rel="stylesheet" href="//at.alicdn.com/t/c/font_1749284_5i9bdhy70f8.css">
+
+
+
+<link rel="stylesheet" href="//at.alicdn.com/t/c/font_1736178_k526ubmyhba.css">
+
+
+<link  rel="stylesheet" href="/css/main.css" />
+
+
+  <link id="highlight-css" rel="stylesheet" href="/css/highlight.css" />
+  
+    <link id="highlight-css-dark" rel="stylesheet" href="/css/highlight-dark.css" />
+  
+
+
+
+
+  <script id="fluid-configs">
+    var Fluid = window.Fluid || {};
+    Fluid.ctx = Object.assign({}, Fluid.ctx)
+    var CONFIG = {"hostname":"scratch-ml.github.io","root":"/","version":"1.9.8","typing":{"enable":false,"typeSpeed":70,"cursorChar":"_","loop":false,"scope":[]},"anchorjs":{"enable":true,"element":"h1,h2,h3,h4,h5,h6","placement":"left","visible":"hover","icon":""},"progressbar":{"enable":true,"height_px":3,"color":"#29d","options":{"showSpinner":false,"trickleSpeed":100}},"code_language":{"enable":true,"default":"TEXT"},"copy_btn":true,"image_caption":{"enable":true},"image_zoom":{"enable":true,"img_url_replace":["",""]},"toc":{"enable":true,"placement":"right","headingSelector":"h1,h2,h3,h4,h5,h6","collapseDepth":0},"lazyload":{"enable":true,"loading_img":"/img/loading.gif","onlypost":false,"offset_factor":2},"web_analytics":{"enable":false,"follow_dnt":true,"baidu":null,"google":{"measurement_id":null},"tencent":{"sid":null,"cid":null},"leancloud":{"app_id":null,"app_key":null,"server_url":null,"path":"window.location.pathname","ignore_local":false},"umami":{"src":null,"website_id":null,"domains":null,"start_time":"2024-01-01T00:00:00.000Z","token":null,"api_server":null}},"search_path":"/local-search.xml","include_content_in_search":true};
+
+    if (CONFIG.web_analytics.follow_dnt) {
+      var dntVal = navigator.doNotTrack || window.doNotTrack || navigator.msDoNotTrack;
+      Fluid.ctx.dnt = dntVal && (dntVal.startsWith('1') || dntVal.startsWith('yes') || dntVal.startsWith('on'));
+    }
+  </script>
+  <script  src="/js/utils.js" ></script>
+  <script  src="/js/color-schema.js" ></script>
+  
+
+
+  
+<meta name="generator" content="Hexo 7.3.0"></head>
+
+
+<body>
+  
+
+  <header>
+    
+
+<div class="header-inner" style="height: 30vh;">
+  <nav id="navbar" class="navbar fixed-top  navbar-expand-lg navbar-dark scrolling-navbar">
+  <div class="container">
+    <a class="navbar-brand" href="/">
+      <strong>ScratchML</strong>
+    </a>
+
+    <button id="navbar-toggler-btn" class="navbar-toggler" type="button" data-toggle="collapse"
+            data-target="#navbarSupportedContent"
+            aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+      <div class="animated-icon"><span></span><span></span><span></span></div>
+    </button>
+
+    <!-- Collapsible content -->
+    <div class="collapse navbar-collapse" id="navbarSupportedContent">
+      <ul class="navbar-nav ml-auto text-center">
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/" target="_self">
+                <i class="iconfont icon-home-fill"></i>
+                <span>首页</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/archives/" target="_self">
+                <i class="iconfont icon-archive-fill"></i>
+                <span>归档</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/tags/" target="_self">
+                <i class="iconfont icon-tags-fill"></i>
+                <span>标签</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/about/" target="_self">
+                <i class="iconfont icon-user-fill"></i>
+                <span>关于</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/links/" target="_self">
+                <i class="iconfont icon-link-fill"></i>
+                <span>友链</span>
+              </a>
+            </li>
+          
+        
+        
+          <li class="nav-item" id="search-btn">
+            <a class="nav-link" target="_self" href="javascript:;" data-toggle="modal" data-target="#modalSearch" aria-label="Search">
+              <i class="iconfont icon-search"></i>
+            </a>
+          </li>
+          
+        
+        
+          <li class="nav-item" id="color-toggle-btn">
+            <a class="nav-link" target="_self" href="javascript:;" aria-label="Color Toggle">
+              <i class="iconfont icon-dark" id="color-toggle-icon"></i>
+            </a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+</nav>
+
+  
+
+<div id="banner" class="banner" parallax=true
+     style="background: url('/img/default.png') no-repeat center center; background-size: cover;">
+  <div class="full-bg-img">
+    <div class="mask flex-center" style="background-color: rgba(0, 0, 0, 0.3)">
+      <div class="banner-text text-center fade-in-up">
+        <div class="h2">
+          
+            <span id="subtitle">深度学习模型量化技术详解</span>
+          
+        </div>
+
+        
+          
+  <div class="mt-3">
+    
+    
+      <span class="post-meta">
+        <i class="iconfont icon-date-fill" aria-hidden="true"></i>
+        <time datetime="2025-08-25 20:30" pubdate>
+          2025年8月25日 晚上
+        </time>
+      </span>
+    
+  </div>
+
+  <div class="mt-1">
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-chart"></i>
+        
+          4.4k 字
+        
+      </span>
+    
+
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-clock-fill"></i>
+        
+        
+        
+          37 分钟
+        
+      </span>
+    
+
+    
+    
+  </div>
+
+
+        
+      </div>
+
+      
+    </div>
+  </div>
+</div>
+
+</div>
+
+  </header>
+
+  <main>
+    
+      
+
+<div class="container-fluid nopadding-x">
+  <div class="row nomargin-x">
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+
+    </div>
+
+    <div class="col-lg-8 nopadding-x-md">
+      <div class="container nopadding-x-md" id="board-ctn">
+        <div id="board">
+          <article class="post-content mx-auto">
+            <h1 id="seo-header">深度学习模型量化技术详解</h1>
+            
+            
+              <div class="markdown-body">
+                
+                <h1 id="深度学习模型量化技术详解"><a href="#深度学习模型量化技术详解" class="headerlink" title="深度学习模型量化技术详解"></a>深度学习模型量化技术详解</h1><h2 id="1-量化技术概述与基础原理"><a href="#1-量化技术概述与基础原理" class="headerlink" title="1. 量化技术概述与基础原理"></a>1. 量化技术概述与基础原理</h2><h3 id="1-1-量化技术简介"><a href="#1-1-量化技术简介" class="headerlink" title="1.1 量化技术简介"></a>1.1 量化技术简介</h3><p>模型量化（Quantization）是深度学习模型压缩和加速的核心技术之一。随着大型语言模型（LLM）和其他深度学习模型规模的快速增长，模型部署面临着存储空间、计算资源和推理延迟的严峻挑战。量化技术通过降低模型权重和激活值的数值精度，在保持模型性能的同时显著减少内存占用和计算开销。</p>
+<p>量化过程的核心是建立高精度数值表示与低精度数值表示之间的映射关系。在深度学习中，量化通常指将32位浮点数（FP32）转换为低精度表示，如16位浮点数（FP16、BF16）、8位整数（INT8）或更低精度的表示。这种转换可以带来显著的性能提升：</p>
+<ul>
+<li><strong>存储优化</strong>：模型大小可减少50%-75%</li>
+<li><strong>计算加速</strong>：推理速度提升2-4倍</li>
+<li><strong>内存节省</strong>：显存占用降低60%-80%</li>
+<li><strong>能耗降低</strong>：特别适合移动端和边缘设备部署</li>
+</ul>
+<h3 id="1-2-量化的数学原理"><a href="#1-2-量化的数学原理" class="headerlink" title="1.2 量化的数学原理"></a>1.2 量化的数学原理</h3><p>量化过程的核心是建立高精度数值表示与低精度数值表示之间的映射关系。。标准的量化公式如下：</p>
+<p><strong>量化过程（Quantization）：</strong></p>
+<figure class="highlight isbl"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs isbl">量化值 = <span class="hljs-function"><span class="hljs-title">quantize_func</span>((原始值 - <span class="hljs-variable">zero_point</span>) / <span class="hljs-variable">scale</span>)</span><br></code></pre></td></tr></table></figure>
+
+<p><strong>反量化过程（Dequantization）：</strong></p>
+<figure class="highlight fix"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs fix"><span class="hljs-attr">反量化值 </span>=<span class="hljs-string"> 量化值 × scale + zero_point</span><br></code></pre></td></tr></table></figure>
+
+<p>其中关键参数包括：</p>
+<ul>
+<li><strong>scale（量化比例因子）</strong>：控制量化精度的关键参数</li>
+<li><strong>zero_point（零点偏移量）</strong>：处理非对称分布的偏移值</li>
+<li><strong>quantize_func()</strong>：量化函数，可以是round()、floor()、ceil()或其他舍入策略</li>
+</ul>
+<p><strong>常见的量化函数选择：</strong></p>
+<ul>
+<li><strong>round()</strong>：四舍五入，最常用的量化函数</li>
+<li><strong>floor()</strong>：向下取整，某些硬件实现的首选</li>
+<li><strong>ceil()</strong>：向上取整，在特定场景下使用</li>
+<li><strong>truncate()</strong>：向零取整，部分量化库的默认选择</li>
+<li><strong>stochastic rounding</strong>：随机舍入，在训练过程中有助于减少量化误差累积</li>
+</ul>
+<h3 id="1-3-量化技术分类体系"><a href="#1-3-量化技术分类体系" class="headerlink" title="1.3 量化技术分类体系"></a>1.3 量化技术分类体系</h3><h4 id="1-3-1-按量化时机分类"><a href="#1-3-1-按量化时机分类" class="headerlink" title="1.3.1 按量化时机分类"></a>1.3.1 按量化时机分类</h4><p><strong>训练后量化（Post-Training Quantization, PTQ）</strong></p>
+<ul>
+<li><strong>实施时机</strong>：在模型训练完成后进行量化</li>
+<li><strong>优势</strong>：实现简单，部署快速，无需重新训练</li>
+<li><strong>劣势</strong>：可能出现较大精度损失</li>
+<li><strong>适用场景</strong>：快速部署，对精度要求不极致的场景</li>
+</ul>
+<p><strong>量化感知训练（Quantization-Aware Training, QAT）</strong></p>
+<ul>
+<li><strong>实施时机</strong>：在训练过程中模拟量化操作</li>
+<li><strong>优势</strong>：精度损失最小，模型适应性强</li>
+<li><strong>劣势</strong>：训练时间较长，计算开销大</li>
+<li><strong>适用场景</strong>：对精度要求高的关键应用</li>
+</ul>
+<h4 id="1-3-2-按量化对象分类"><a href="#1-3-2-按量化对象分类" class="headerlink" title="1.3.2 按量化对象分类"></a>1.3.2 按量化对象分类</h4><p><strong>权重量化（Weight Quantization）</strong></p>
+<ul>
+<li><strong>量化目标</strong>：仅对模型权重进行量化</li>
+<li><strong>特点</strong>：激活值保持原精度，实现简单</li>
+<li><strong>压缩效果</strong>：中等，主要节省存储空间</li>
+</ul>
+<p><strong>激活量化（Activation Quantization）</strong></p>
+<ul>
+<li><strong>量化目标</strong>：对中间层激活值进行量化</li>
+<li><strong>特点</strong>：需要校准数据集，动态范围估计</li>
+<li><strong>技术挑战</strong>：激活分布复杂，量化难度大</li>
+</ul>
+<p><strong>全量化（Full Quantization）</strong></p>
+<ul>
+<li><strong>量化目标</strong>：同时对权重和激活值进行量化</li>
+<li><strong>特点</strong>：压缩比例最高，技术复杂度最大</li>
+<li><strong>应用场景</strong>：资源极其受限的部署环境</li>
+</ul>
+<h4 id="1-3-3-按量化精度分类"><a href="#1-3-3-按量化精度分类" class="headerlink" title="1.3.3 按量化精度分类"></a>1.3.3 按量化精度分类</h4><p><strong>FP16（半精度浮点）</strong></p>
+<ul>
+<li><strong>数据表示</strong>：16位浮点表示（1位符号 + 5位指数 + 10位尾数）</li>
+<li><strong>特点</strong>：硬件支持良好，精度损失最小</li>
+<li><strong>压缩比例</strong>：2倍压缩</li>
+<li><strong>适用场景</strong>：GPU推理，精度敏感应用</li>
+</ul>
+<p><strong>BF16（Brain Floating Point 16）</strong></p>
+<ul>
+<li><strong>数据表示</strong>：16位浮点表示（1位符号 + 8位指数 + 7位尾数）</li>
+<li><strong>特点</strong>：与FP32具有相同的指数范围，数值范围更广</li>
+<li><strong>压缩比例</strong>：2倍压缩</li>
+<li><strong>适用场景</strong>：大模型训练和推理，特别适合Transformer架构</li>
+</ul>
+<p><strong>FP16 vs BF16 对比</strong></p>
+<table>
+<thead>
+<tr>
+<th>格式</th>
+<th>符号位</th>
+<th>指数位</th>
+<th>尾数位</th>
+<th>数值范围</th>
+<th>精度</th>
+<th>主要优势</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>FP16</td>
+<td>1</td>
+<td>5</td>
+<td>10</td>
+<td>较小</td>
+<td>较高</td>
+<td>精度好，硬件支持广泛</td>
+</tr>
+<tr>
+<td>BF16</td>
+<td>1</td>
+<td>8</td>
+<td>7</td>
+<td>与FP32相同</td>
+<td>较低</td>
+<td>数值稳定性好，溢出风险小</td>
+</tr>
+</tbody></table>
+<p><strong>INT8（8位整数）</strong></p>
+<ul>
+<li><strong>数据表示</strong>：8位整数表示</li>
+<li><strong>特点</strong>：压缩比例高，需要精心校准</li>
+<li><strong>压缩比例</strong>：4倍压缩</li>
+<li><strong>适用场景</strong>：CPU推理，移动端部署</li>
+</ul>
+<p><strong>INT4&#x2F;INT2（极低精度）</strong></p>
+<ul>
+<li><strong>数据表示</strong>：4位或2位整数表示</li>
+<li><strong>特点</strong>：极端压缩场景，精度挑战较大</li>
+<li><strong>压缩比例</strong>：8倍或16倍压缩</li>
+<li><strong>适用场景</strong>：边缘设备，存储极度受限环境</li>
+</ul>
+<h4 id="1-3-4-按量化方式分类"><a href="#1-3-4-按量化方式分类" class="headerlink" title="1.3.4 按量化方式分类"></a>1.3.4 按量化方式分类</h4><p><strong>对称量化（Symmetric Quantization）</strong></p>
+<figure class="highlight fortran"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><code class="hljs fortran">量化值 = <span class="hljs-keyword">round</span>(原始值 / <span class="hljs-built_in">scale</span>)<br><span class="hljs-built_in">scale</span> = <span class="hljs-built_in">max</span>(|min_val|, |max_val|) / (<span class="hljs-number">2</span>^(bit_width-<span class="hljs-number">1</span>) - <span class="hljs-number">1</span>)<br></code></pre></td></tr></table></figure>
+<ul>
+<li><strong>特点</strong>：零点固定为0，计算简单</li>
+<li><strong>适用</strong>：权重量化，分布相对对称的数据</li>
+</ul>
+<p><strong>非对称量化（Asymmetric Quantization）</strong></p>
+<figure class="highlight isbl"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><code class="hljs isbl">量化值 = <span class="hljs-function"><span class="hljs-title"><span class="hljs-built_in">round</span></span>((原始值 - <span class="hljs-variable">zero_point</span>) / <span class="hljs-variable">scale</span>)</span><br><span class="hljs-variable">scale</span> = (<span class="hljs-variable">max_val</span> - <span class="hljs-variable">min_val</span>) / (<span class="hljs-number">2</span>^<span class="hljs-variable">bit_width</span> - <span class="hljs-number">1</span>)<br><span class="hljs-variable">zero_point</span> = <span class="hljs-function"><span class="hljs-title"><span class="hljs-built_in">round</span></span>(-<span class="hljs-variable">min_val</span> / <span class="hljs-variable">scale</span>)</span><br></code></pre></td></tr></table></figure>
+<ul>
+<li><strong>特点</strong>：零点可调整，覆盖范围更优</li>
+<li><strong>适用</strong>：激活量化，分布不对称的数据</li>
+</ul>
+<h3 id="1-4-量化技术的重要意义"><a href="#1-4-量化技术的重要意义" class="headerlink" title="1.4 量化技术的重要意义"></a>1.4 量化技术的重要意义</h3><p>量化技术在现代深度学习系统中扮演着关键角色：</p>
+<p><strong>产业应用价值</strong></p>
+<ul>
+<li>降低云端推理服务成本</li>
+<li>使大模型在移动设备上成为可能</li>
+<li>推动AI技术在IoT设备的普及</li>
+</ul>
+<p><strong>技术发展推动</strong></p>
+<ul>
+<li>促进专用AI芯片的发展</li>
+<li>推动模型架构的量化友好设计</li>
+<li>催生新的模型压缩技术</li>
+</ul>
+<p><strong>环境影响</strong></p>
+<ul>
+<li>减少数据中心能耗</li>
+<li>降低碳排放</li>
+<li>提高计算资源利用率</li>
+</ul>
+<p>通过理解这些基础概念和分类方法，我们为深入学习量化技术的具体实现和应用打下了坚实的理论基础。</p>
+<h2 id="2-数值表示方法详解"><a href="#2-数值表示方法详解" class="headerlink" title="2. 数值表示方法详解"></a>2. 数值表示方法详解</h2><h3 id="2-1-数值表示基础概念"><a href="#2-1-数值表示基础概念" class="headerlink" title="2.1 数值表示基础概念"></a>2.1 数值表示基础概念</h3><p>在深度学习量化技术中，理解不同数值表示方法的特点和适用场景至关重要。数值表示方法主要分为两大类：<strong>整数型表示</strong>和<strong>浮点型表示</strong>。每种表示方法都有其独特的数值范围、精度特征和计算特性。</p>
+<h3 id="2-2-整数型数值表示"><a href="#2-2-整数型数值表示" class="headerlink" title="2.2 整数型数值表示"></a>2.2 整数型数值表示</h3><h4 id="2-2-1-有符号整数表示"><a href="#2-2-1-有符号整数表示" class="headerlink" title="2.2.1 有符号整数表示"></a>2.2.1 有符号整数表示</h4><p><strong>INT8（8位有符号整数）</strong></p>
+<figure class="highlight subunit"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><code class="hljs subunit">数值范围：<span class="hljs-string">-128</span> 到 127<br>位数分配：1位符号位 + 7位数值位<br>存储空间：1字节<br></code></pre></td></tr></table></figure>
+
+<ul>
+<li><strong>优势</strong>：存储效率高，计算速度快，硬件支持好</li>
+<li><strong>劣势</strong>：数值范围有限，需要精确的量化参数</li>
+<li><strong>应用</strong>：权重量化、激活量化的主要选择</li>
+</ul>
+<p><strong>INT4（4位有符号整数）</strong></p>
+<figure class="highlight subunit"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><code class="hljs subunit">数值范围：<span class="hljs-string">-8</span> 到 7<br>位数分配：1位符号位 + 3位数值位<br>存储空间：0.5字节<br></code></pre></td></tr></table></figure>
+
+<ul>
+<li><strong>优势</strong>：极致的存储压缩，适合大模型部署</li>
+<li><strong>劣势</strong>：表示精度极低，量化技术要求高</li>
+<li><strong>应用</strong>：极端资源受限场景</li>
+</ul>
+<p><strong>INT2&#x2F;INT1（极低精度整数）</strong></p>
+<figure class="highlight apache"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><code class="hljs apache"><span class="hljs-attribute">INT2</span> 数值范围：-<span class="hljs-number">2</span> 到 <span class="hljs-number">1</span><br><span class="hljs-attribute">INT1</span> 数值范围：-<span class="hljs-number">1</span> 到 <span class="hljs-number">0</span>（实际为二值化）<br></code></pre></td></tr></table></figure>
+
+<ul>
+<li><strong>特点</strong>：研究性质较强，实际应用有限</li>
+<li><strong>挑战</strong>：精度损失严重，需要特殊的量化算法</li>
+</ul>
+<h4 id="2-2-2-无符号整数表示"><a href="#2-2-2-无符号整数表示" class="headerlink" title="2.2.2 无符号整数表示"></a>2.2.2 无符号整数表示</h4><p><strong>UINT8（8位无符号整数）</strong></p>
+<figure class="highlight"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><code class="hljs">数值范围：0 到 255<br>位数分配：8位数值位<br>存储空间：1字节<br></code></pre></td></tr></table></figure>
+
+<ul>
+<li><strong>优势</strong>：全正数范围，适合ReLU后的激活量化</li>
+<li><strong>应用</strong>：激活值量化的常见选择</li>
+</ul>
+<h3 id="2-3-浮点型数值表示"><a href="#2-3-浮点型数值表示" class="headerlink" title="2.3 浮点型数值表示"></a>2.3 浮点型数值表示</h3><h4 id="2-3-1-IEEE-754标准浮点数"><a href="#2-3-1-IEEE-754标准浮点数" class="headerlink" title="2.3.1 IEEE 754标准浮点数"></a>2.3.1 IEEE 754标准浮点数</h4><p><strong>FP32（32位单精度浮点）</strong></p>
+<figure class="highlight parser3"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><code class="hljs parser3"><span class="language-xml">总位数：</span><span class="hljs-number">32</span><span class="language-xml">位</span><br><span class="language-xml">位数分配：</span><span class="hljs-number">1</span><span class="language-xml">位符号 + </span><span class="hljs-number">8</span><span class="language-xml">位指数 + </span><span class="hljs-number">23</span><span class="language-xml">位尾数</span><br><span class="language-xml">数值范围：约 ±</span><span class="hljs-number">3.4</span><span class="language-xml"> × </span><span class="hljs-number">10</span><span class="hljs-keyword">^38</span><span class="language-xml"></span><br><span class="language-xml">精度：约</span><span class="hljs-number">7</span><span class="language-xml">位十进制数字</span><br></code></pre></td></tr></table></figure>
+
+<ul>
+<li><strong>特点</strong>：深度学习的标准精度，精度和范围平衡良好</li>
+<li><strong>应用</strong>：模型训练的默认数据类型</li>
+</ul>
+<p><strong>FP64（64位双精度浮点）</strong></p>
+<figure class="highlight parser3"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><code class="hljs parser3"><span class="language-xml">总位数：</span><span class="hljs-number">64</span><span class="language-xml">位</span><br><span class="language-xml">位数分配：</span><span class="hljs-number">1</span><span class="language-xml">位符号 + </span><span class="hljs-number">11</span><span class="language-xml">位指数 + </span><span class="hljs-number">52</span><span class="language-xml">位尾数</span><br><span class="language-xml">数值范围：约 ±</span><span class="hljs-number">1.8</span><span class="language-xml"> × </span><span class="hljs-number">10</span><span class="hljs-keyword">^308</span><span class="language-xml"></span><br><span class="language-xml">精度：约</span><span class="hljs-number">15</span><span class="language-xml">位十进制数字</span><br></code></pre></td></tr></table></figure>
+
+<ul>
+<li><strong>特点</strong>：科学计算标准，在深度学习中较少使用</li>
+<li><strong>应用</strong>：要求极高精度的特殊场景</li>
+</ul>
+<h4 id="2-3-2-半精度浮点数"><a href="#2-3-2-半精度浮点数" class="headerlink" title="2.3.2 半精度浮点数"></a>2.3.2 半精度浮点数</h4><p><strong>FP16（16位半精度浮点）</strong></p>
+<figure class="highlight subunit"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><code class="hljs subunit">总位数：16位<br>位数分配：1位符号 + 5位指数 + 10位尾数<br>数值范围：约 ±6.55 × 10^4<br>精度：约3位十进制数字<br>指数范围：<span class="hljs-string">-14</span> 到 <span class="hljs-string">+15</span><br></code></pre></td></tr></table></figure>
+
+<p><strong>数值表示示例：</strong></p>
+<figure class="highlight dns"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><code class="hljs dns">十进制数 <span class="hljs-number">1</span>.<span class="hljs-number">5</span> 的FP16表示：<br>符号位：<span class="hljs-number">0</span>（正数）<br>指数位：<span class="hljs-number">01111（15</span>，表示<span class="hljs-number">2</span>^<span class="hljs-number">0</span>）<br>尾数位：<span class="hljs-number">1000000000</span>（<span class="hljs-number">0.5，1+0</span>.<span class="hljs-number">5</span>=<span class="hljs-number">1</span>.<span class="hljs-number">5</span>）<br>二进制：<span class="hljs-number">0 01111</span> <span class="hljs-number">1000000000</span><br></code></pre></td></tr></table></figure>
+
+<ul>
+<li><strong>优势</strong>：存储减半，现代GPU支持良好</li>
+<li><strong>劣势</strong>：数值范围较小，容易发生溢出</li>
+<li><strong>应用</strong>：GPU推理、混合精度训练</li>
+</ul>
+<p><strong>BF16（Brain Floating Point 16）</strong></p>
+<figure class="highlight subunit"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><code class="hljs subunit">总位数：16位<br>位数分配：1位符号 + 8位指数 + 7位尾数<br>数值范围：与FP32相同（约 ±3.4 × 10^38）<br>精度：约2位十进制数字（比FP16低）<br>指数范围：<span class="hljs-string">-126</span> 到 <span class="hljs-string">+127</span>（与FP32相同）<br></code></pre></td></tr></table></figure>
+
+<p><strong>数值表示示例：</strong></p>
+<figure class="highlight dns"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><code class="hljs dns">十进制数 <span class="hljs-number">1</span>.<span class="hljs-number">5</span> 的BF16表示：<br>符号位：<span class="hljs-number">0</span>（正数）<br>指数位：<span class="hljs-number">01111111（127</span>，表示<span class="hljs-number">2</span>^<span class="hljs-number">0</span>）<br>尾数位：<span class="hljs-number">1000000（0</span>.<span class="hljs-number">5，1+0.5</span>=<span class="hljs-number">1</span>.<span class="hljs-number">5</span>）<br>二进制：<span class="hljs-number">0 01111111</span> <span class="hljs-number">1000000</span><br></code></pre></td></tr></table></figure>
+
+<ul>
+<li><strong>优势</strong>：与FP32相同的数值范围，训练稳定性好</li>
+<li><strong>劣势</strong>：精度比FP16略低</li>
+<li><strong>应用</strong>：大模型训练、Google TPU优化</li>
+</ul>
+<h4 id="2-3-3-FP16-vs-BF16-详细对比"><a href="#2-3-3-FP16-vs-BF16-详细对比" class="headerlink" title="2.3.3 FP16 vs BF16 详细对比"></a>2.3.3 FP16 vs BF16 详细对比</h4><table>
+<thead>
+<tr>
+<th>特性</th>
+<th>FP16</th>
+<th>BF16</th>
+<th>备注</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><strong>位数分配</strong></td>
+<td>1+5+10</td>
+<td>1+8+7</td>
+<td>BF16指数位更多</td>
+</tr>
+<tr>
+<td><strong>数值范围</strong></td>
+<td>±6.55×10^4</td>
+<td>±3.4×10^38</td>
+<td>BF16范围更广</td>
+</tr>
+<tr>
+<td><strong>最小正数</strong></td>
+<td>6.10×10^-5</td>
+<td>1.18×10^-38</td>
+<td>BF16能表示更小的数</td>
+</tr>
+<tr>
+<td><strong>精度</strong></td>
+<td>~3位小数</td>
+<td>~2位小数</td>
+<td>FP16精度更高</td>
+</tr>
+<tr>
+<td><strong>溢出风险</strong></td>
+<td>较高</td>
+<td>低</td>
+<td>BF16更稳定</td>
+</tr>
+<tr>
+<td><strong>硬件支持</strong></td>
+<td>广泛</td>
+<td>逐渐增加</td>
+<td>FP16支持更成熟</td>
+</tr>
+</tbody></table>
+<p><strong>选择建议：</strong></p>
+<ul>
+<li><strong>训练场景</strong>：BF16更稳定，推荐用于大模型训练</li>
+<li><strong>推理场景</strong>：FP16精度更高，适合对精度敏感的推理</li>
+<li><strong>硬件考虑</strong>：根据目标硬件的支持情况选择</li>
+</ul>
+<h3 id="2-4-数值表示的量化映射"><a href="#2-4-数值表示的量化映射" class="headerlink" title="2.4 数值表示的量化映射"></a>2.4 数值表示的量化映射</h3><h4 id="2-4-1-浮点到整数的映射"><a href="#2-4-1-浮点到整数的映射" class="headerlink" title="2.4.1 浮点到整数的映射"></a>2.4.1 浮点到整数的映射</h4><p><strong>线性量化映射：</strong></p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br></pre></td><td class="code"><pre><code class="hljs python"><span class="hljs-comment"># FP32 到 INT8 的量化过程</span><br><span class="hljs-keyword">def</span> <span class="hljs-title function_">fp32_to_int8</span>(<span class="hljs-params">fp32_value, scale, zero_point</span>):<br>    <span class="hljs-string">&quot;&quot;&quot;</span><br><span class="hljs-string">    Args:</span><br><span class="hljs-string">        fp32_value: 原始FP32数值</span><br><span class="hljs-string">        scale: 量化比例因子</span><br><span class="hljs-string">        zero_point: 零点偏移</span><br><span class="hljs-string">    &quot;&quot;&quot;</span><br>    <span class="hljs-comment"># 量化</span><br>    quantized = <span class="hljs-built_in">round</span>((fp32_value / scale) + zero_point)<br>    <span class="hljs-comment"># 截断到INT8范围</span><br>    quantized = <span class="hljs-built_in">max</span>(-<span class="hljs-number">128</span>, <span class="hljs-built_in">min</span>(<span class="hljs-number">127</span>, quantized))<br>    <span class="hljs-keyword">return</span> quantized<br><br><span class="hljs-comment"># INT8 到 FP32 的反量化过程</span><br><span class="hljs-keyword">def</span> <span class="hljs-title function_">int8_to_fp32</span>(<span class="hljs-params">int8_value, scale, zero_point</span>):<br>    <span class="hljs-string">&quot;&quot;&quot;反量化过程&quot;&quot;&quot;</span><br>    <span class="hljs-keyword">return</span> scale * (int8_value - zero_point)<br></code></pre></td></tr></table></figure>
+
+<p><strong>量化参数计算：</strong></p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><code class="hljs python"><span class="hljs-keyword">def</span> <span class="hljs-title function_">calculate_quantization_params</span>(<span class="hljs-params">fp32_tensor</span>):<br>    <span class="hljs-string">&quot;&quot;&quot;计算量化参数&quot;&quot;&quot;</span><br>    min_val = fp32_tensor.<span class="hljs-built_in">min</span>()<br>    max_val = fp32_tensor.<span class="hljs-built_in">max</span>()<br>    <br>    <span class="hljs-comment"># 对称量化</span><br>    <span class="hljs-keyword">if</span> <span class="hljs-built_in">abs</span>(min_val) == <span class="hljs-built_in">abs</span>(max_val):<br>        scale = max_val / <span class="hljs-number">127</span><br>        zero_point = <span class="hljs-number">0</span><br>    <span class="hljs-comment"># 非对称量化</span><br>    <span class="hljs-keyword">else</span>:<br>        scale = (max_val - min_val) / <span class="hljs-number">255</span><br>        zero_point = <span class="hljs-built_in">round</span>(-min_val / scale)<br>    <br>    <span class="hljs-keyword">return</span> scale, zero_point<br></code></pre></td></tr></table></figure>
+
+<h4 id="2-4-2-浮点精度转换"><a href="#2-4-2-浮点精度转换" class="headerlink" title="2.4.2 浮点精度转换"></a>2.4.2 浮点精度转换</h4><p><strong>FP32 到 FP16 转换：</strong></p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><code class="hljs python"><span class="hljs-keyword">import</span> numpy <span class="hljs-keyword">as</span> np<br><br><span class="hljs-keyword">def</span> <span class="hljs-title function_">fp32_to_fp16</span>(<span class="hljs-params">fp32_value</span>):<br>    <span class="hljs-string">&quot;&quot;&quot;FP32到FP16的转换&quot;&quot;&quot;</span><br>    <span class="hljs-keyword">return</span> np.float16(fp32_value)<br><br><span class="hljs-keyword">def</span> <span class="hljs-title function_">fp16_to_fp32</span>(<span class="hljs-params">fp16_value</span>):<br>    <span class="hljs-string">&quot;&quot;&quot;FP16到FP32的转换&quot;&quot;&quot;</span><br>    <span class="hljs-keyword">return</span> np.float32(fp16_value)<br></code></pre></td></tr></table></figure>
+
+<p><strong>FP32 到 BF16 转换：</strong></p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><code class="hljs python"><span class="hljs-keyword">def</span> <span class="hljs-title function_">fp32_to_bf16</span>(<span class="hljs-params">fp32_value</span>):<br>    <span class="hljs-string">&quot;&quot;&quot;FP32到BF16的转换（简化实现）&quot;&quot;&quot;</span><br>    <span class="hljs-comment"># 获取FP32的位表示</span><br>    bits = np.frombuffer(np.array([fp32_value], dtype=np.float32).tobytes(), dtype=np.uint32)[<span class="hljs-number">0</span>]<br>    <br>    <span class="hljs-comment"># 保留符号位和指数位，截断尾数位到7位</span><br>    bf16_bits = (bits &gt;&gt; <span class="hljs-number">16</span>) &amp; <span class="hljs-number">0xFFFF</span><br>    <br>    <span class="hljs-keyword">return</span> bf16_bits<br><br><span class="hljs-keyword">def</span> <span class="hljs-title function_">bf16_to_fp32</span>(<span class="hljs-params">bf16_bits</span>):<br>    <span class="hljs-string">&quot;&quot;&quot;BF16到FP32的转换&quot;&quot;&quot;</span><br>    <span class="hljs-comment"># 将BF16扩展为FP32格式</span><br>    fp32_bits = bf16_bits &lt;&lt; <span class="hljs-number">16</span><br>    <br>    <span class="hljs-comment"># 转换回浮点数</span><br>    <span class="hljs-keyword">return</span> np.frombuffer(np.array([fp32_bits], dtype=np.uint32).tobytes(), dtype=np.float32)[<span class="hljs-number">0</span>]<br></code></pre></td></tr></table></figure>
+
+<h3 id="2-5-不同数值表示的性能特征"><a href="#2-5-不同数值表示的性能特征" class="headerlink" title="2.5 不同数值表示的性能特征"></a>2.5 不同数值表示的性能特征</h3><h4 id="2-5-1-存储效率对比"><a href="#2-5-1-存储效率对比" class="headerlink" title="2.5.1 存储效率对比"></a>2.5.1 存储效率对比</h4><table>
+<thead>
+<tr>
+<th>数据类型</th>
+<th>位数</th>
+<th>存储空间</th>
+<th>压缩比（相对FP32）</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>FP64</td>
+<td>64</td>
+<td>8字节</td>
+<td>0.5×</td>
+</tr>
+<tr>
+<td>FP32</td>
+<td>32</td>
+<td>4字节</td>
+<td>1×</td>
+</tr>
+<tr>
+<td>FP16</td>
+<td>16</td>
+<td>2字节</td>
+<td>2×</td>
+</tr>
+<tr>
+<td>BF16</td>
+<td>16</td>
+<td>2字节</td>
+<td>2×</td>
+</tr>
+<tr>
+<td>INT8</td>
+<td>8</td>
+<td>1字节</td>
+<td>4×</td>
+</tr>
+<tr>
+<td>INT4</td>
+<td>4</td>
+<td>0.5字节</td>
+<td>8×</td>
+</tr>
+</tbody></table>
+<h4 id="2-5-2-计算性能对比"><a href="#2-5-2-计算性能对比" class="headerlink" title="2.5.2 计算性能对比"></a>2.5.2 计算性能对比</h4><p><strong>理论峰值性能（相对FP32）：</strong></p>
+<ul>
+<li><strong>FP16</strong>：2-4× 加速（现代GPU）</li>
+<li><strong>BF16</strong>：2-4× 加速（TPU优化）</li>
+<li><strong>INT8</strong>：4-8× 加速（专用硬件）</li>
+<li><strong>INT4</strong>：8-16× 加速（特殊场景）</li>
+</ul>
+<p><strong>实际应用中的性能受多种因素影响：</strong></p>
+<ul>
+<li>硬件架构支持</li>
+<li>数据访问模式</li>
+<li>算法实现优化</li>
+<li>内存带宽限制</li>
+</ul>
+<h3 id="2-6-选择合适的数值表示"><a href="#2-6-选择合适的数值表示" class="headerlink" title="2.6 选择合适的数值表示"></a>2.6 选择合适的数值表示</h3><h4 id="2-6-1-决策矩阵"><a href="#2-6-1-决策矩阵" class="headerlink" title="2.6.1 决策矩阵"></a>2.6.1 决策矩阵</h4><table>
+<thead>
+<tr>
+<th>场景</th>
+<th>推荐数据类型</th>
+<th>主要考虑因素</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><strong>模型训练</strong></td>
+<td>FP32, BF16</td>
+<td>数值稳定性优先</td>
+</tr>
+<tr>
+<td><strong>云端推理</strong></td>
+<td>FP16, INT8</td>
+<td>性能和精度平衡</td>
+</tr>
+<tr>
+<td><strong>移动端部署</strong></td>
+<td>INT8, INT4</td>
+<td>存储和功耗限制</td>
+</tr>
+<tr>
+<td><strong>边缘设备</strong></td>
+<td>INT8, INT4</td>
+<td>硬件资源限制</td>
+</tr>
+<tr>
+<td><strong>精度敏感应用</strong></td>
+<td>FP16, FP32</td>
+<td>准确性优先</td>
+</tr>
+</tbody></table>
+<h4 id="2-6-2-选择策略"><a href="#2-6-2-选择策略" class="headerlink" title="2.6.2 选择策略"></a>2.6.2 选择策略</h4><ol>
+<li><strong>确定约束条件</strong>：硬件支持、存储限制、延迟要求</li>
+<li><strong>评估精度需求</strong>：任务复杂度、可接受的精度损失</li>
+<li><strong>考虑实施复杂度</strong>：量化算法、校准数据需求</li>
+<li><strong>性能验证</strong>：实际测试不同数值表示的效果</li>
+</ol>
+<p>通过深入理解这些数值表示方法，我们可以为不同的量化场景选择最合适的数据类型，在性能和精度之间找到最佳平衡点。</p>
+<h2 id="3-量化实现技术"><a href="#3-量化实现技术" class="headerlink" title="3. 量化实现技术"></a>3. 量化实现技术</h2><h3 id="3-1-常用量化框架"><a href="#3-1-常用量化框架" class="headerlink" title="3.1 常用量化框架"></a>3.1 常用量化框架</h3><h4 id="3-1-1-PyTorch量化"><a href="#3-1-1-PyTorch量化" class="headerlink" title="3.1.1 PyTorch量化"></a>3.1.1 PyTorch量化</h4><figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><code class="hljs python"><span class="hljs-keyword">import</span> torch.quantization <span class="hljs-keyword">as</span> quant<br><br><span class="hljs-comment"># 训练后量化</span><br>model_fp32 = MyModel()<br>model_fp32.<span class="hljs-built_in">eval</span>()<br>model_int8 = quant.quantize_dynamic(<br>    model_fp32, &#123;torch.nn.Linear&#125;, dtype=torch.qint8<br>)<br><br><span class="hljs-comment"># 量化感知训练</span><br>model_fp32.qconfig = quant.get_default_qat_qconfig(<span class="hljs-string">&#x27;fbgemm&#x27;</span>)<br>model_fp32_prepared = quant.prepare_qat(model_fp32)<br><span class="hljs-comment"># 训练过程...</span><br>model_int8 = quant.convert(model_fp32_prepared)<br></code></pre></td></tr></table></figure>
+
+<h4 id="3-1-2-TensorRT量化"><a href="#3-1-2-TensorRT量化" class="headerlink" title="3.1.2 TensorRT量化"></a>3.1.2 TensorRT量化</h4><figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><code class="hljs python"><span class="hljs-keyword">import</span> tensorrt <span class="hljs-keyword">as</span> trt<br><br><span class="hljs-comment"># INT8校准</span><br><span class="hljs-keyword">class</span> <span class="hljs-title class_">Calibrator</span>(trt.IInt8EntropyCalibrator2):<br>    <span class="hljs-keyword">def</span> <span class="hljs-title function_">__init__</span>(<span class="hljs-params">self, data_loader</span>):<br>        trt.IInt8EntropyCalibrator2.__init__(<span class="hljs-variable language_">self</span>)<br>        <span class="hljs-variable language_">self</span>.data_loader = data_loader<br>        <span class="hljs-comment"># 实现必要的方法...</span><br></code></pre></td></tr></table></figure>
+
+<h3 id="3-2-量化优化技巧"><a href="#3-2-量化优化技巧" class="headerlink" title="3.2 量化优化技巧"></a>3.2 量化优化技巧</h3><h4 id="3-2-1-层级量化策略"><a href="#3-2-1-层级量化策略" class="headerlink" title="3.2.1 层级量化策略"></a>3.2.1 层级量化策略</h4><ul>
+<li>对不同层使用不同的量化精度</li>
+<li>关键层保持高精度，非关键层低精度</li>
+</ul>
+<h4 id="3-2-2-混合精度量化"><a href="#3-2-2-混合精度量化" class="headerlink" title="3.2.2 混合精度量化"></a>3.2.2 混合精度量化</h4><ul>
+<li>在同一模型中使用多种数值精度</li>
+<li>平衡性能和精度的最优组合</li>
+</ul>
+<h2 id="4-LLM量化特殊考虑"><a href="#4-LLM量化特殊考虑" class="headerlink" title="4. LLM量化特殊考虑"></a>4. LLM量化特殊考虑</h2><h3 id="4-1-大模型量化挑战"><a href="#4-1-大模型量化挑战" class="headerlink" title="4.1 大模型量化挑战"></a>4.1 大模型量化挑战</h3><p><strong>参数规模庞大</strong></p>
+<ul>
+<li>需要高效的量化算法</li>
+<li>内存占用优化至关重要</li>
+</ul>
+<p><strong>注意力机制量化</strong></p>
+<ul>
+<li>Attention计算的特殊性</li>
+<li>Query、Key、Value的量化策略</li>
+</ul>
+<p><strong>长序列处理</strong></p>
+<ul>
+<li>KV Cache的量化</li>
+<li>序列长度对量化精度的影响</li>
+</ul>
+<h3 id="4-2-LLM量化技术"><a href="#4-2-LLM量化技术" class="headerlink" title="4.2 LLM量化技术"></a>4.2 LLM量化技术</h3><h4 id="4-2-1-GPTQ"><a href="#4-2-1-GPTQ" class="headerlink" title="4.2.1 GPTQ"></a>4.2.1 GPTQ</h4><ul>
+<li>基于二阶信息的权重量化</li>
+<li>逐层量化，保持精度</li>
+</ul>
+<h4 id="4-2-2-AWQ-Activation-aware-Weight-Quantization"><a href="#4-2-2-AWQ-Activation-aware-Weight-Quantization" class="headerlink" title="4.2.2 AWQ (Activation-aware Weight Quantization)"></a>4.2.2 AWQ (Activation-aware Weight Quantization)</h4><ul>
+<li>考虑激活分布的权重量化</li>
+<li>保护重要权重通道</li>
+</ul>
+<h4 id="4-2-3-SmoothQuant"><a href="#4-2-3-SmoothQuant" class="headerlink" title="4.2.3 SmoothQuant"></a>4.2.3 SmoothQuant</h4><ul>
+<li>通过数学等价变换平滑激活分布</li>
+<li>降低量化难度</li>
+</ul>
+<h2 id="5-量化效果评估"><a href="#5-量化效果评估" class="headerlink" title="5. 量化效果评估"></a>5. 量化效果评估</h2><h3 id="5-1-性能指标"><a href="#5-1-性能指标" class="headerlink" title="5.1 性能指标"></a>5.1 性能指标</h3><p><strong>模型精度</strong></p>
+<ul>
+<li>准确率变化</li>
+<li>困惑度（Perplexity）对比</li>
+</ul>
+<p><strong>压缩效果</strong></p>
+<ul>
+<li>模型大小减少比例</li>
+<li>内存占用降低</li>
+</ul>
+<p><strong>推理性能</strong></p>
+<ul>
+<li>推理速度提升</li>
+<li>延迟降低程度</li>
+</ul>
+<p><strong>硬件兼容性</strong></p>
+<ul>
+<li>不同硬件平台支持</li>
+<li>专用加速器利用</li>
+</ul>
+<h3 id="5-2-评估方法"><a href="#5-2-评估方法" class="headerlink" title="5.2 评估方法"></a>5.2 评估方法</h3><figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br></pre></td><td class="code"><pre><code class="hljs python"><span class="hljs-keyword">def</span> <span class="hljs-title function_">evaluate_quantized_model</span>(<span class="hljs-params">original_model, quantized_model, test_data</span>):<br>    <span class="hljs-string">&quot;&quot;&quot;量化模型评估函数&quot;&quot;&quot;</span><br>    <br>    <span class="hljs-comment"># 精度对比</span><br>    original_acc = evaluate_accuracy(original_model, test_data)<br>    quantized_acc = evaluate_accuracy(quantized_model, test_data)<br>    accuracy_drop = original_acc - quantized_acc<br>    <br>    <span class="hljs-comment"># 模型大小对比</span><br>    original_size = get_model_size(original_model)<br>    quantized_size = get_model_size(quantized_model)<br>    compression_ratio = original_size / quantized_size<br>    <br>    <span class="hljs-comment"># 推理速度对比</span><br>    original_time = measure_inference_time(original_model, test_data)<br>    quantized_time = measure_inference_time(quantized_model, test_data)<br>    speedup = original_time / quantized_time<br>    <br>    <span class="hljs-keyword">return</span> &#123;<br>        <span class="hljs-string">&#x27;accuracy_drop&#x27;</span>: accuracy_drop,<br>        <span class="hljs-string">&#x27;compression_ratio&#x27;</span>: compression_ratio,<br>        <span class="hljs-string">&#x27;speedup&#x27;</span>: speedup<br>    &#125;<br></code></pre></td></tr></table></figure>
+
+<h2 id="6-实践案例"><a href="#6-实践案例" class="headerlink" title="6. 实践案例"></a>6. 实践案例</h2><h3 id="6-1-BERT模型量化"><a href="#6-1-BERT模型量化" class="headerlink" title="6.1 BERT模型量化"></a>6.1 BERT模型量化</h3><figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br></pre></td><td class="code"><pre><code class="hljs python"><span class="hljs-comment"># BERT INT8量化示例</span><br><span class="hljs-keyword">from</span> transformers <span class="hljs-keyword">import</span> BertModel<br><span class="hljs-keyword">import</span> torch.quantization <span class="hljs-keyword">as</span> quant<br><br><span class="hljs-comment"># 加载预训练模型</span><br>model = BertModel.from_pretrained(<span class="hljs-string">&#x27;bert-base-uncased&#x27;</span>)<br>model.<span class="hljs-built_in">eval</span>()<br><br><span class="hljs-comment"># 准备量化配置</span><br>model.qconfig = quant.get_default_qconfig(<span class="hljs-string">&#x27;fbgemm&#x27;</span>)<br>model_prepared = quant.prepare(model)<br><br><span class="hljs-comment"># 校准（使用代表性数据）</span><br><span class="hljs-keyword">with</span> torch.no_grad():<br>    <span class="hljs-keyword">for</span> batch <span class="hljs-keyword">in</span> calibration_data:<br>        model_prepared(batch)<br><br><span class="hljs-comment"># 转换为量化模型</span><br>model_quantized = quant.convert(model_prepared)<br></code></pre></td></tr></table></figure>
+
+<h3 id="6-2-GPT模型量化"><a href="#6-2-GPT模型量化" class="headerlink" title="6.2 GPT模型量化"></a>6.2 GPT模型量化</h3><figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br></pre></td><td class="code"><pre><code class="hljs python"><span class="hljs-comment"># GPT模型量化示例（伪代码）</span><br><span class="hljs-keyword">def</span> <span class="hljs-title function_">quantize_gpt_model</span>(<span class="hljs-params">model, calibration_data</span>):<br>    <span class="hljs-string">&quot;&quot;&quot;GPT模型量化流程&quot;&quot;&quot;</span><br>    <br>    <span class="hljs-comment"># 1. 权重量化</span><br>    quantized_weights = quantize_weights(model.transformer.wte.weight)<br>    <br>    <span class="hljs-comment"># 2. 注意力层量化</span><br>    <span class="hljs-keyword">for</span> layer <span class="hljs-keyword">in</span> model.transformer.h:<br>        <span class="hljs-comment"># 量化注意力权重</span><br>        layer.attn.c_attn.weight = quantize_linear_layer(<br>            layer.attn.c_attn.weight, calibration_data<br>        )<br>        <br>        <span class="hljs-comment"># 量化前馈网络</span><br>        layer.mlp.c_fc.weight = quantize_linear_layer(<br>            layer.mlp.c_fc.weight, calibration_data<br>        )<br>    <br>    <span class="hljs-keyword">return</span> model<br></code></pre></td></tr></table></figure>
+
+<h2 id="7-最佳实践"><a href="#7-最佳实践" class="headerlink" title="7. 最佳实践"></a>7. 最佳实践</h2><h3 id="7-1-量化策略选择"><a href="#7-1-量化策略选择" class="headerlink" title="7.1 量化策略选择"></a>7.1 量化策略选择</h3><p><strong>模型类型考虑</strong></p>
+<ul>
+<li>CNN：权重量化效果好</li>
+<li>Transformer：需要特殊处理注意力机制</li>
+<li>RNN：序列依赖性带来挑战</li>
+</ul>
+<p><strong>部署环境考虑</strong></p>
+<ul>
+<li>移动端：极致压缩，INT8&#x2F;INT4</li>
+<li>云端：平衡精度和性能，FP16&#x2F;INT8</li>
+<li>边缘设备：硬件限制，选择合适精度</li>
+</ul>
+<h3 id="7-2-量化流程建议"><a href="#7-2-量化流程建议" class="headerlink" title="7.2 量化流程建议"></a>7.2 量化流程建议</h3><ol>
+<li><strong>基线建立</strong>：评估原始模型性能</li>
+<li><strong>量化方案设计</strong>：选择合适的量化策略</li>
+<li><strong>校准数据准备</strong>：收集代表性数据集</li>
+<li><strong>量化实施</strong>：按计划执行量化</li>
+<li><strong>效果评估</strong>：全面测试量化效果</li>
+<li><strong>优化调整</strong>：根据结果调整策略</li>
+<li><strong>部署验证</strong>：在真实环境中验证</li>
+</ol>
+<h3 id="7-3-常见问题与解决"><a href="#7-3-常见问题与解决" class="headerlink" title="7.3 常见问题与解决"></a>7.3 常见问题与解决</h3><p><strong>精度损失过大</strong></p>
+<ul>
+<li>使用更高精度量化</li>
+<li>采用混合精度策略</li>
+<li>增加校准数据量</li>
+</ul>
+<p><strong>推理速度未提升</strong></p>
+<ul>
+<li>检查硬件支持</li>
+<li>优化计算图</li>
+<li>使用专用推理引擎</li>
+</ul>
+<p><strong>内存占用异常</strong></p>
+<ul>
+<li>检查量化实现</li>
+<li>优化数据布局</li>
+<li>使用内存映射</li>
+</ul>
+<h2 id="8-未来发展趋势"><a href="#8-未来发展趋势" class="headerlink" title="8. 未来发展趋势"></a>8. 未来发展趋势</h2><h3 id="8-1-技术发展方向"><a href="#8-1-技术发展方向" class="headerlink" title="8.1 技术发展方向"></a>8.1 技术发展方向</h3><p><strong>极低精度量化</strong></p>
+<ul>
+<li>1-bit、2-bit量化研究</li>
+<li>新的量化算法开发</li>
+</ul>
+<p><strong>自适应量化</strong></p>
+<ul>
+<li>基于输入的动态量化</li>
+<li>层级自适应精度选择</li>
+</ul>
+<p><strong>硬件协同设计</strong></p>
+<ul>
+<li>量化友好的模型架构</li>
+<li>专用量化加速器</li>
+</ul>
+<h3 id="8-2-应用场景扩展"><a href="#8-2-应用场景扩展" class="headerlink" title="8.2 应用场景扩展"></a>8.2 应用场景扩展</h3><p><strong>移动端AI</strong></p>
+<ul>
+<li>端侧大模型部署</li>
+<li>实时推理优化</li>
+</ul>
+<p><strong>边缘计算</strong></p>
+<ul>
+<li>IoT设备AI能力</li>
+<li>低功耗推理</li>
+</ul>
+<p><strong>云端服务</strong></p>
+<ul>
+<li>大规模模型服务</li>
+<li>成本效益优化</li>
+</ul>
+<h2 id="9-总结"><a href="#9-总结" class="headerlink" title="9. 总结"></a>9. 总结</h2><p>量化技术作为深度学习模型优化的重要手段，在保持模型性能的同时显著降低了部署成本。通过本文的介绍，我们了解了：</p>
+<ol>
+<li><strong>量化基础理论</strong>：数学原理和分类方法</li>
+<li><strong>实现技术</strong>：算法细节和框架使用</li>
+<li><strong>特殊考虑</strong>：LLM量化的独特挑战</li>
+<li><strong>实践经验</strong>：最佳实践和常见问题</li>
+<li><strong>发展趋势</strong>：技术演进和应用前景</li>
+</ol>
+<p>随着硬件技术的发展和算法的不断改进，量化技术将在AI模型部署中发挥越来越重要的作用。掌握量化技术，对于深度学习工程师来说是必不可少的技能。</p>
+<h2 id="参考资料"><a href="#参考资料" class="headerlink" title="参考资料"></a>参考资料</h2><ol>
+<li><a target="_blank" rel="noopener" href="https://arxiv.org/abs/1712.05877">Quantization and Training of Neural Networks for Efficient Integer-Arithmetic-Only Inference</a></li>
+<li><a target="_blank" rel="noopener" href="https://arxiv.org/abs/2103.13630">A Survey of Quantization Methods for Efficient Neural Network Inference</a></li>
+<li><a target="_blank" rel="noopener" href="https://arxiv.org/abs/2210.17323">GPTQ: Accurate Post-Training Quantization for Generative Pre-trained Transformers</a></li>
+<li><a target="_blank" rel="noopener" href="https://arxiv.org/abs/2306.00978">AWQ: Activation-aware Weight Quantization for LLM Compression and Acceleration</a></li>
+<li><a target="_blank" rel="noopener" href="https://arxiv.org/abs/2211.10438">SmoothQuant: Accurate and Efficient Post-Training Quantization for Large Language Models</a></li>
+<li>PyTorch Quantization Documentation</li>
+<li>TensorRT Developer Guide</li>
+</ol>
+
+                
+              </div>
+            
+            <hr/>
+            <div>
+              <div class="post-metas my-3">
+  
+  
+    <div class="post-meta">
+      <i class="iconfont icon-tags"></i>
+      
+        <a href="/tags/%E9%87%8F%E5%8C%96/" class="print-no-link">#量化</a>
+      
+        <a href="/tags/%E6%B7%B1%E5%BA%A6%E5%AD%A6%E4%B9%A0/" class="print-no-link">#深度学习</a>
+      
+        <a href="/tags/%E6%A8%A1%E5%9E%8B%E4%BC%98%E5%8C%96/" class="print-no-link">#模型优化</a>
+      
+        <a href="/tags/%E6%8E%A8%E7%90%86%E5%8A%A0%E9%80%9F/" class="print-no-link">#推理加速</a>
+      
+    </div>
+  
+</div>
+
+
+              
+  
+
+  <div class="license-box my-3">
+    <div class="license-title">
+      <div>深度学习模型量化技术详解</div>
+      <div>https://scratch-ml.github.io/2025/08/25/quantization/</div>
+    </div>
+    <div class="license-meta">
+      
+        <div class="license-meta-item">
+          <div>作者</div>
+          <div>MingliangLi</div>
+        </div>
+      
+      
+        <div class="license-meta-item license-meta-date">
+          <div>发布于</div>
+          <div>2025年8月25日</div>
+        </div>
+      
+      
+      
+        <div class="license-meta-item">
+          <div>许可协议</div>
+          <div>
+            
+              
+              
+                <a class="print-no-link" target="_blank" href="https://creativecommons.org/licenses/by/4.0/">
+                  <span class="hint--top hint--rounded" aria-label="BY - 署名">
+                    <i class="iconfont icon-cc-by"></i>
+                  </span>
+                </a>
+              
+            
+          </div>
+        </div>
+      
+    </div>
+    <div class="license-icon iconfont"></div>
+  </div>
+
+
+
+              
+            </div>
+
+            
+          </article>
+        </div>
+      </div>
+    </div>
+
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+  <aside class="sidebar" style="margin-left: -1rem">
+    <div id="toc">
+  <p class="toc-header">
+    <i class="iconfont icon-list"></i>
+    <span>目录</span>
+  </p>
+  <div class="toc-body" id="toc-body"></div>
+</div>
+
+
+
+  </aside>
+
+
+    </div>
+  </div>
+</div>
+
+
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+  
+  
+
+
+
+
+
+
+
+
+
+    
+
+    
+      <a id="scroll-top-button" aria-label="TOP" href="#" role="button">
+        <i class="iconfont icon-arrowup" aria-hidden="true"></i>
+      </a>
+    
+
+    
+      <div class="modal fade" id="modalSearch" tabindex="-1" role="dialog" aria-labelledby="ModalLabel"
+     aria-hidden="true">
+  <div class="modal-dialog modal-dialog-scrollable modal-lg" role="document">
+    <div class="modal-content">
+      <div class="modal-header text-center">
+        <h4 class="modal-title w-100 font-weight-bold">搜索</h4>
+        <button type="button" id="local-search-close" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body mx-3">
+        <div class="md-form mb-5">
+          <input type="text" id="local-search-input" class="form-control validate">
+          <label data-error="x" data-success="v" for="local-search-input">关键词</label>
+        </div>
+        <div class="list-group" id="local-search-result"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+    
+
+    
+  </main>
+
+  <footer>
+    <div class="footer-inner">
+  
+    <div class="footer-content">
+       <a href="https://hexo.io" target="_blank" rel="nofollow noopener"><span>Hexo</span></a> <i class="iconfont icon-love"></i> <a href="https://github.com/fluid-dev/hexo-theme-fluid" target="_blank" rel="nofollow noopener"><span>Fluid</span></a> 
+    </div>
+  
+  
+  
+</div>
+
+  </footer>
+
+  <!-- Scripts -->
+  
+  <script  src="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.js" ></script>
+  <link  rel="stylesheet" href="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.css" />
+
+  <script>
+    NProgress.configure({"showSpinner":false,"trickleSpeed":100})
+    NProgress.start()
+    window.addEventListener('load', function() {
+      NProgress.done();
+    })
+  </script>
+
+
+<script  src="https://lib.baomitu.com/jquery/3.6.4/jquery.min.js" ></script>
+<script  src="https://lib.baomitu.com/twitter-bootstrap/4.6.1/js/bootstrap.min.js" ></script>
+<script  src="/js/events.js" ></script>
+<script  src="/js/plugins.js" ></script>
+
+
+
+
+
+  
+    <script  src="/js/img-lazyload.js" ></script>
+  
+
+
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/tocbot/4.20.1/tocbot.min.js', function() {
+    var toc = jQuery('#toc');
+    if (toc.length === 0 || !window.tocbot) { return; }
+    var boardCtn = jQuery('#board-ctn');
+    var boardTop = boardCtn.offset().top;
+
+    window.tocbot.init(Object.assign({
+      tocSelector     : '#toc-body',
+      contentSelector : '.markdown-body',
+      linkClass       : 'tocbot-link',
+      activeLinkClass : 'tocbot-active-link',
+      listClass       : 'tocbot-list',
+      isCollapsedClass: 'tocbot-is-collapsed',
+      collapsibleClass: 'tocbot-is-collapsible',
+      scrollSmooth    : true,
+      includeTitleTags: true,
+      headingsOffset  : -boardTop,
+    }, CONFIG.toc));
+    if (toc.find('.toc-list-item').length > 0) {
+      toc.css('visibility', 'visible');
+    }
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('tocbot' in window) {
+        tocbot.refresh();
+        var toc = jQuery('#toc');
+        if (toc.length === 0 || !tocbot) {
+          return;
+        }
+        if (toc.find('.toc-list-item').length > 0) {
+          toc.css('visibility', 'visible');
+        }
+      }
+    });
+  });
+</script>
+
+
+  <script src=https://lib.baomitu.com/clipboard.js/2.0.11/clipboard.min.js></script>
+
+  <script>Fluid.plugins.codeWidget();</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/anchor-js/5.0.0/anchor.min.js', function() {
+    window.anchors.options = {
+      placement: CONFIG.anchorjs.placement,
+      visible  : CONFIG.anchorjs.visible
+    };
+    if (CONFIG.anchorjs.icon) {
+      window.anchors.options.icon = CONFIG.anchorjs.icon;
+    }
+    var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+    var res = [];
+    for (var item of el) {
+      res.push('.markdown-body > ' + item.trim());
+    }
+    if (CONFIG.anchorjs.placement === 'left') {
+      window.anchors.options.class = 'anchorjs-link-left';
+    }
+    window.anchors.add(res.join(', '));
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('anchors' in window) {
+        anchors.removeAll();
+        var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+        var res = [];
+        for (var item of el) {
+          res.push('.markdown-body > ' + item.trim());
+        }
+        if (CONFIG.anchorjs.placement === 'left') {
+          anchors.options.class = 'anchorjs-link-left';
+        }
+        anchors.add(res.join(', '));
+      }
+    });
+  });
+</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.js', function() {
+    Fluid.plugins.fancyBox();
+  });
+</script>
+
+
+  <script>Fluid.plugins.imageCaption();</script>
+
+  
+      <script>
+        if (!window.MathJax) {
+          window.MathJax = {
+            tex    : {
+              inlineMath: { '[+]': [['$', '$']] }
+            },
+            loader : {
+              load: ['ui/lazy']
+            },
+            options: {
+              renderActions: {
+                insertedScript: [200, () => {
+                  document.querySelectorAll('mjx-container').forEach(node => {
+                    let target = node.parentNode;
+                    if (target.nodeName.toLowerCase() === 'li') {
+                      target.parentNode.classList.add('has-jax');
+                    }
+                  });
+                }, '', false]
+              }
+            }
+          };
+        } else {
+          MathJax.startup.document.state(0);
+          MathJax.texReset();
+          MathJax.typeset();
+          MathJax.typesetPromise();
+        }
+
+        Fluid.events.registerRefreshCallback(function() {
+          if ('MathJax' in window && MathJax.startup.document && typeof MathJax.startup.document.state === 'function') {
+            MathJax.startup.document.state(0);
+            MathJax.texReset();
+            MathJax.typeset();
+            MathJax.typesetPromise();
+          }
+        });
+      </script>
+    
+
+  <script  src="https://lib.baomitu.com/mathjax/3.2.2/es5/tex-mml-chtml.js" ></script>
+
+  <script  src="/js/local-search.js" ></script>
+
+
+
+
+
+<!-- 主题的启动项，将它保持在最底部 -->
+<!-- the boot of the theme, keep it at the bottom -->
+<script  src="/js/boot.js" ></script>
+
+
+  
+
+  <noscript>
+    <div class="noscript-warning">博客在允许 JavaScript 运行的环境下浏览效果更佳</div>
+  </noscript>
+</body>
+</html>

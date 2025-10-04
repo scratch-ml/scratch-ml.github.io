@@ -1,0 +1,751 @@
+
+
+<!DOCTYPE html>
+<html lang="zh-CN" data-default-color-scheme=auto>
+
+
+
+<head>
+  <meta charset="UTF-8">
+
+  <link rel="apple-touch-icon" sizes="76x76" href="/img/fluid.png">
+  <link rel="icon" href="/img/fluid.png">
+  
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, shrink-to-fit=no">
+  <meta http-equiv="x-ua-compatible" content="ie=edge">
+  
+  <meta name="theme-color" content="#2f4154">
+  <meta name="author" content="MingliangLi">
+  <meta name="keywords" content="">
+  
+    <meta name="description" content="1. 概述分词器 (Tokenizer) 是自然语言处理中的基础组件，它的核心作用是在人类可读的文本和机器可处理的数字之间建立桥梁。 具体来说，分词器能够将我们日常使用的文本字符串编码为整数序列，这些整数被称为 token，是模型训练和推理的基本单位。同时，它也能执行相反的过程，将整数序列解码回我们能够理解的原始文本。为了实现这种双向转换，分词器需要维护一个完整的词汇表，这个词汇表定义了所有可能出">
+<meta property="og:type" content="article">
+<meta property="og:title" content="tokenization">
+<meta property="og:url" content="https://scratch-ml.github.io/2025/09/28/tokenization/index.html">
+<meta property="og:site_name" content="ScratchML">
+<meta property="og:description" content="1. 概述分词器 (Tokenizer) 是自然语言处理中的基础组件，它的核心作用是在人类可读的文本和机器可处理的数字之间建立桥梁。 具体来说，分词器能够将我们日常使用的文本字符串编码为整数序列，这些整数被称为 token，是模型训练和推理的基本单位。同时，它也能执行相反的过程，将整数序列解码回我们能够理解的原始文本。为了实现这种双向转换，分词器需要维护一个完整的词汇表，这个词汇表定义了所有可能出">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://cdn.jsdelivr.net/gh/scratch-ml/scratch-ml.github.io@main/source/_posts/tokenization/tokenized-example.png">
+<meta property="article:published_time" content="2025-09-28T15:16:48.000Z">
+<meta property="article:modified_time" content="2025-09-29T08:01:20.760Z">
+<meta property="article:author" content="MingliangLi">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image" content="https://cdn.jsdelivr.net/gh/scratch-ml/scratch-ml.github.io@main/source/_posts/tokenization/tokenized-example.png">
+  
+  
+  
+  <title>tokenization - ScratchML</title>
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/twitter-bootstrap/4.6.1/css/bootstrap.min.css" />
+
+
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/github-markdown-css/4.0.0/github-markdown.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/hint.css/2.7.0/hint.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.css" />
+
+
+
+<!-- 主题依赖的图标库，不要自行修改 -->
+<!-- Do not modify the link that theme dependent icons -->
+
+<link rel="stylesheet" href="//at.alicdn.com/t/c/font_1749284_5i9bdhy70f8.css">
+
+
+
+<link rel="stylesheet" href="//at.alicdn.com/t/c/font_1736178_k526ubmyhba.css">
+
+
+<link  rel="stylesheet" href="/css/main.css" />
+
+
+  <link id="highlight-css" rel="stylesheet" href="/css/highlight.css" />
+  
+    <link id="highlight-css-dark" rel="stylesheet" href="/css/highlight-dark.css" />
+  
+
+
+
+
+  <script id="fluid-configs">
+    var Fluid = window.Fluid || {};
+    Fluid.ctx = Object.assign({}, Fluid.ctx)
+    var CONFIG = {"hostname":"scratch-ml.github.io","root":"/","version":"1.9.8","typing":{"enable":false,"typeSpeed":70,"cursorChar":"_","loop":false,"scope":[]},"anchorjs":{"enable":true,"element":"h1,h2,h3,h4,h5,h6","placement":"left","visible":"hover","icon":""},"progressbar":{"enable":true,"height_px":3,"color":"#29d","options":{"showSpinner":false,"trickleSpeed":100}},"code_language":{"enable":true,"default":"TEXT"},"copy_btn":true,"image_caption":{"enable":true},"image_zoom":{"enable":true,"img_url_replace":["",""]},"toc":{"enable":true,"placement":"right","headingSelector":"h1,h2,h3,h4,h5,h6","collapseDepth":0},"lazyload":{"enable":true,"loading_img":"/img/loading.gif","onlypost":false,"offset_factor":2},"web_analytics":{"enable":false,"follow_dnt":true,"baidu":null,"google":{"measurement_id":null},"tencent":{"sid":null,"cid":null},"leancloud":{"app_id":null,"app_key":null,"server_url":null,"path":"window.location.pathname","ignore_local":false},"umami":{"src":null,"website_id":null,"domains":null,"start_time":"2024-01-01T00:00:00.000Z","token":null,"api_server":null}},"search_path":"/local-search.xml","include_content_in_search":true};
+
+    if (CONFIG.web_analytics.follow_dnt) {
+      var dntVal = navigator.doNotTrack || window.doNotTrack || navigator.msDoNotTrack;
+      Fluid.ctx.dnt = dntVal && (dntVal.startsWith('1') || dntVal.startsWith('yes') || dntVal.startsWith('on'));
+    }
+  </script>
+  <script  src="/js/utils.js" ></script>
+  <script  src="/js/color-schema.js" ></script>
+  
+
+
+  
+<meta name="generator" content="Hexo 7.3.0"></head>
+
+
+<body>
+  
+
+  <header>
+    
+
+<div class="header-inner" style="height: 30vh;">
+  <nav id="navbar" class="navbar fixed-top  navbar-expand-lg navbar-dark scrolling-navbar">
+  <div class="container">
+    <a class="navbar-brand" href="/">
+      <strong>ScratchML</strong>
+    </a>
+
+    <button id="navbar-toggler-btn" class="navbar-toggler" type="button" data-toggle="collapse"
+            data-target="#navbarSupportedContent"
+            aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+      <div class="animated-icon"><span></span><span></span><span></span></div>
+    </button>
+
+    <!-- Collapsible content -->
+    <div class="collapse navbar-collapse" id="navbarSupportedContent">
+      <ul class="navbar-nav ml-auto text-center">
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/" target="_self">
+                <i class="iconfont icon-home-fill"></i>
+                <span>首页</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/archives/" target="_self">
+                <i class="iconfont icon-archive-fill"></i>
+                <span>归档</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/tags/" target="_self">
+                <i class="iconfont icon-tags-fill"></i>
+                <span>标签</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/about/" target="_self">
+                <i class="iconfont icon-user-fill"></i>
+                <span>关于</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/links/" target="_self">
+                <i class="iconfont icon-link-fill"></i>
+                <span>友链</span>
+              </a>
+            </li>
+          
+        
+        
+          <li class="nav-item" id="search-btn">
+            <a class="nav-link" target="_self" href="javascript:;" data-toggle="modal" data-target="#modalSearch" aria-label="Search">
+              <i class="iconfont icon-search"></i>
+            </a>
+          </li>
+          
+        
+        
+          <li class="nav-item" id="color-toggle-btn">
+            <a class="nav-link" target="_self" href="javascript:;" aria-label="Color Toggle">
+              <i class="iconfont icon-dark" id="color-toggle-icon"></i>
+            </a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+</nav>
+
+  
+
+<div id="banner" class="banner" parallax=true
+     style="background: url('/img/default.png') no-repeat center center; background-size: cover;">
+  <div class="full-bg-img">
+    <div class="mask flex-center" style="background-color: rgba(0, 0, 0, 0.3)">
+      <div class="banner-text text-center fade-in-up">
+        <div class="h2">
+          
+            <span id="subtitle">tokenization</span>
+          
+        </div>
+
+        
+          
+  <div class="mt-3">
+    
+    
+      <span class="post-meta">
+        <i class="iconfont icon-date-fill" aria-hidden="true"></i>
+        <time datetime="2025-09-28 23:16" pubdate>
+          2025年9月28日 晚上
+        </time>
+      </span>
+    
+  </div>
+
+  <div class="mt-1">
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-chart"></i>
+        
+          5.2k 字
+        
+      </span>
+    
+
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-clock-fill"></i>
+        
+        
+        
+          44 分钟
+        
+      </span>
+    
+
+    
+    
+  </div>
+
+
+        
+      </div>
+
+      
+    </div>
+  </div>
+</div>
+
+</div>
+
+  </header>
+
+  <main>
+    
+      
+
+<div class="container-fluid nopadding-x">
+  <div class="row nomargin-x">
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+
+    </div>
+
+    <div class="col-lg-8 nopadding-x-md">
+      <div class="container nopadding-x-md" id="board-ctn">
+        <div id="board">
+          <article class="post-content mx-auto">
+            <h1 id="seo-header">tokenization</h1>
+            
+            
+              <div class="markdown-body">
+                
+                <h3 id="1-概述"><a href="#1-概述" class="headerlink" title="1. 概述"></a>1. 概述</h3><p>分词器 (Tokenizer) 是自然语言处理中的基础组件，它的核心作用是在人类可读的文本和机器可处理的数字之间建立桥梁。</p>
+<p>具体来说，分词器能够将我们日常使用的文本字符串编码为整数序列，这些整数被称为 token，是模型训练和推理的基本单位。同时，它也能执行相反的过程，将整数序列解码回我们能够理解的原始文本。为了实现这种双向转换，分词器需要维护一个完整的词汇表，这个词汇表定义了所有可能出现的 token 及其对应的整数编号。</p>
+<p>下图展示了一个具体的分词示例，我们可以看到 tokenizer 是如何在文本和 token 序列之间进行 encode&#x2F;decode 转换的。</p>
+<center class="img">
+<figure>
+    <img title="分词示例" src="https://cdn.jsdelivr.net/gh/scratch-ml/scratch-ml.github.io@main/source/_posts/tokenization/tokenized-example.png" srcset="/img/loading.gif" lazyload width="800">
+    <figcaption>tokenizer 编解码示例</figcaption>
+</figure>
+</center>
+
+<h4 id="1-1-分词方法的评价指标"><a href="#1-1-分词方法的评价指标" class="headerlink" title="1.1 分词方法的评价指标"></a>1.1 分词方法的评价指标</h4><p>在深入了解各种分词方法之前，我们需要明确如何衡量一个分词方法的好坏。一个优秀的分词器需要在多个关键指标之间取得平衡，这些指标直接影响着模型的性能、效率和实用性。</p>
+<p><strong>词汇表大小 (Vocabulary Size)</strong>：这是最直观的指标之一。词汇表过大会导致模型参数量激增，特别是嵌入层的参数会随词汇表大小线性增长。例如，如果词汇表有 10 万个 token，每个 token 用 512 维向量表示，仅嵌入层就需要 5120 万个参数。同时，大词汇表也会增加内存占用和计算开销。</p>
+<p><strong>序列长度 (Sequence Length)</strong>：对于相同的文本，不同分词方法产生的 token 序列长度差异巨大。序列长度直接影响模型的计算复杂度，特别是对于 Transformer 架构，注意力机制的计算复杂度与序列长度呈平方关系。更长的序列意味着更高的计算成本和内存需求。</p>
+<p><strong>压缩率 (Compression Rate)</strong>：这个指标衡量分词器将原始文本压缩成 token 序列的效率。压缩率定义为原始字节数与 token 数量的比值。较高的压缩率意味着用更少的 token 表示相同的信息，这不仅提高了计算效率，还能让模型在固定的上下文窗口内处理更多的文本内容。</p>
+<p><strong>未登录词处理能力 (OOV Handling)</strong>：模型在实际应用中必然会遇到训练时未见过的词汇，如新词、专业术语、人名地名等。一个好的分词器应该能够优雅地处理这些情况，而不是简单地标记为未知符号，避免信息的完全丢失。</p>
+<p>此外，还有一些其他考量因素值得关注：分词器应该尽可能保持语义单元的完整性，避免将完整的词过度拆分而破坏语义信息；需要具备一定的多语言适应性，能够处理中文、日文等非空格分隔语言以及混合文本；同时分词器本身的训练和推理效率也不容忽视，过于复杂的算法可能成为系统瓶颈。</p>
+<p>在接下来的章节中，我们将通过这些评价维度来分析各种主流分词方法的优缺点，力求理解为什么某些方法在特定场景下更受青睐。</p>
+<h3 id="2-常见分词方法"><a href="#2-常见分词方法" class="headerlink" title="2. 常见分词方法"></a>2. 常见分词方法</h3><h4 id="2-1-字符级分词-Character-based-Tokenization"><a href="#2-1-字符级分词-Character-based-Tokenization" class="headerlink" title="2.1 字符级分词 (Character-based Tokenization)"></a>2.1 字符级分词 (Character-based Tokenization)</h4><p>字符级分词是最直观的分词方式，它将文本按照单个 Unicode 字符进行切分。Unicode 是一个将字符映射到整数码点 (code point) 的文本编码标准，截至 2024 年 9 月发布的 Unicode 16.0 版本，该标准定义了 154,998 个字符，涵盖 168 种文字系统。每个字符都对应一个唯一的整数 ID，比如字符 “s” 的码点是 115（通常记作 U+0073），而汉字 “牛” 的码点是 29275（通常记作 U+72C2）。在 Python 中，我们可以使用 <code>ord()</code> 函数将字符转换为整数，用 <code>chr()</code> 函数将整数转换回字符：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><code class="hljs python"><span class="hljs-meta">&gt;&gt;&gt; </span><span class="hljs-built_in">ord</span>(<span class="hljs-string">&#x27;s&#x27;</span>)<br><span class="hljs-number">115</span><br><span class="hljs-meta">&gt;&gt;&gt; </span><span class="hljs-built_in">ord</span>(<span class="hljs-string">&#x27;牛&#x27;</span>)<br><span class="hljs-number">29275</span><br><span class="hljs-meta">&gt;&gt;&gt; </span><span class="hljs-built_in">chr</span>(<span class="hljs-number">115</span>)<br><span class="hljs-string">&#x27;s&#x27;</span><br><span class="hljs-meta">&gt;&gt;&gt; </span><span class="hljs-built_in">chr</span>(<span class="hljs-number">29275</span>)<br><span class="hljs-string">&#x27;牛&#x27;</span><br></code></pre></td></tr></table></figure>
+
+
+<p>从实现角度来看，字符级分词几乎不需要任何预处理。你只需要遍历文本中的每个字符，然后查找它对应的 Unicode 码点即可。这种简单性使得它成为很多研究项目的首选，特别是在处理多语言文本或包含大量特殊符号的场景时。</p>
+<p>然而，字符级分词也有明显的局限性。首要的问题是词汇表过于庞大（150K+ 的词汇表长度），导致模型的嵌入层参数量激增。另一个问题，大部分 Unicode 字符在实际应用中很少出现，这意味着模型需要为大量低频字符分配参数空间，造成了严重的资源浪费。更糟糕的是序列长度，由于每个字符都是一个 token，原本一个单词可能需要拆分成十几个字符 token，这大大增加了序列的长度。对于基于注意力机制的模型来说，这意味着计算复杂度的平方级增长，严重影响了训练和推理效率。</p>
+<h4 id="2-2-字节级分词-Byte-based-Tokenization"><a href="#2-2-字节级分词-Byte-based-Tokenization" class="headerlink" title="2.2 字节级分词 (Byte-based Tokenization)"></a>2.2 字节级分词 (Byte-based Tokenization)</h4><p>字节级分词采用了一种更加底层的处理方式，它将文本转换为 UTF-8 字节序列，然后将每个字节映射到 0-255 之间的整数。这种方法的最大优势在于词汇表大小固定为 256，相比字符级分词大大减少了词汇表的规模。需要注意的是，UTF-8 编码采用变长编码方式：ASCII 字符如英文字母使用 1 个字节表示，而中文、日文等字符通常需要 3 个字节，一些特殊符号甚至需要 4 个字节。这意味着一个中文字符 “中” 会被拆分成 3 个独立的字节 token（例如：0xE4、0xB8、0xAD），每个字节单独处理。</p>
+<p>从实现角度来看，字节级分词非常简单直接，不需要复杂的预处理步骤，这使得它在某些应用场景中颇受欢迎。然而，这种方法也存在明显的问题。首先是压缩率极低，压缩比率等于 1，意味着每个字节对应一个 token，没有实现任何文本压缩。最重要的是，序列长度问题依然严重，甚至可能比字符级分词更糟（存在一个字符多个字节的情况）。由于序列长度过长，这种方法并不适合 Transformer 等基于注意力机制的模型（注意力机制的计算复杂度与序列长度呈平方关系，会严重影响模型的训练和推理效率）</p>
+<h4 id="2-3-词级分词-Word-based-Tokenization"><a href="#2-3-词级分词-Word-based-Tokenization" class="headerlink" title="2.3 词级分词 (Word-based Tokenization)"></a>2.3 词级分词 (Word-based Tokenization)</h4><p>词级分词是最直观的分词方式，它将文本按照自然的词边界进行切分，每个完整的词作为一个独立的 token。这种方法通常使用正则表达式或基于空格的简单规则来识别词边界，比如将 “Hello world” 分解为 [“Hello”, “world”] 两个 token。</p>
+<p>从语义角度来看，词级分词具有天然的优势。由于每个 token 都对应一个完整的词，模型能够直接学习到词汇级别的语义表示，这与人类的语言理解方式高度一致。对于许多自然语言处理任务，这种语义完整性能够显著提升模型的理解能力。</p>
+<p>然而，词级分词也面临着严峻的挑战。最突出的问题是词汇表规模的爆炸性增长。英语中的词汇数量可能达到数十万甚至上百万，这意味着模型需要为每个词维护一个独立的嵌入向量，导致参数量急剧膨胀。更棘手的是未登录词（Out-of-Vocabulary, OOV）问题：当模型遇到训练时未见过的词汇时，只能将其标记为特殊的 <code>&lt;UNK&gt;</code> 符号，造成信息的彻底丢失。这在处理专业术语、人名、地名或新兴词汇时尤为严重。</p>
+<h4 id="2-4-字节对编码-BPE-Byte-Pair-Encoding"><a href="#2-4-字节对编码-BPE-Byte-Pair-Encoding" class="headerlink" title="2.4 字节对编码 (BPE, Byte Pair Encoding)"></a>2.4 字节对编码 (BPE, Byte Pair Encoding)</h4><p>BPE 是一种非常流行的子词分词方法，它结合了字节级和词级分词的优点，通过训练自动确定词汇表，常用字符序列用单个 token 表示，罕见序列用多个 token 表示。BPE 的工作原理相对简单而有效：首先从字节级 token 开始构建初始词汇表，然后统计相邻 token 对的出现频率，接着合并最常见的 token 对形成新的 token，并重复这个过程直到达到目标词汇表大小。这种迭代式的合并过程确保了高频的字符序列能够被保留为完整的 token，而低频序列则被拆分为更小的组成部分。正是由于这些优势，BPE 被 GPT-2 等主流语言模型广泛采用，成为了现代自然语言处理的标准分词方法之一。</p>
+<p>BPE 被广泛采用的原因在于它巧妙地解决了自然语言处理中的几个关键问题。首先是彻底解决了未登录词 (Out-of-Vocabulary, OOV) 问题。在传统的单词级分词中，模型遇到训练时没见过的词（如专业术语、新词）时，只能将其标记为 <code>&lt;UNK&gt;</code>（未知符号），导致信息丢失。BPE 则将这类罕见词或新词拆解为已知的子词单元，例如将 “unseen” 拆分为 “un” 和 “seen”，从而让模型能够理解和处理之前未见过的词汇。</p>
+<p>其次，BPE 在词汇表大小与语义粒度之间取得了巧妙的平衡。单词级分词的词汇表可能异常庞大（英文可达数十万词），导致模型参数爆炸；字符级分词虽然词汇表极小，但序列过长，模型难以学习语义。BPE 通过一个大小可控的词汇表（通常为 3 万至 10 万），既保留了常见词的完整性，又将低频词拆分为有意义的子词单元。</p>
+<p>此外，BPE 还具有强大的多语言适应性。它不依赖任何语言的预先定义规则或词典，完全基于数据驱动的学习方式。这使得它能够无缝处理多种语言混合的文本，并对德语、土耳其语等形态变化丰富的语言展现出良好的效果。</p>
+<h3 id="3-BPE-算法实现"><a href="#3-BPE-算法实现" class="headerlink" title="3. BPE 算法实现"></a>3. BPE 算法实现</h3><h4 id="3-1-BPE-算法的初步实现"><a href="#3-1-BPE-算法的初步实现" class="headerlink" title="3.1 BPE 算法的初步实现"></a>3.1 BPE 算法的初步实现</h4><p>BPE 的算法实现遵循如下过程：首先将输入文本转换为 UTF-8 字节序列作为初始 tokens，然后在指定的合并次数内重复执行”统计相邻 token pair 频率→找出最高频的 token pair → 将其合并为新 token → 更新序列”的过程，最终生成一个包含原始 256 个字节 token 加上新合并 token 的词汇表和合并规则表。这种方法巧妙地在词汇表大小可控的前提下，让高频字符序列保持完整性，低频序列被拆分为子词单元，从而解决了传统分词方法中词汇表过大或序列过长的问题，实现了压缩效率与语义保持的平衡。</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br></pre></td><td class="code"><pre><code class="hljs python"><span class="hljs-keyword">from</span> dataclasses <span class="hljs-keyword">import</span> dataclass<br><span class="hljs-keyword">from</span> collections <span class="hljs-keyword">import</span> defaultdict<br><span class="hljs-keyword">from</span> typing <span class="hljs-keyword">import</span> <span class="hljs-type">Dict</span>, <span class="hljs-type">Tuple</span>, <span class="hljs-type">List</span><br><br><span class="hljs-meta">@dataclass(<span class="hljs-params">frozen=<span class="hljs-literal">True</span></span>)</span><br><span class="hljs-keyword">class</span> <span class="hljs-title class_">BPETokenizerParams</span>:<br>    vocab: <span class="hljs-type">Dict</span>[<span class="hljs-built_in">int</span>, <span class="hljs-built_in">bytes</span>]<br>    merges: <span class="hljs-type">Dict</span>[<span class="hljs-type">Tuple</span>[<span class="hljs-built_in">int</span>, <span class="hljs-built_in">int</span>], <span class="hljs-built_in">int</span>]<br><br><span class="hljs-keyword">def</span> <span class="hljs-title function_">merge</span>(<span class="hljs-params">indices: <span class="hljs-type">List</span>[<span class="hljs-built_in">int</span>], pair: <span class="hljs-type">Tuple</span>[<span class="hljs-built_in">int</span>, <span class="hljs-built_in">int</span>], new_index: <span class="hljs-built_in">int</span></span>) -&gt; <span class="hljs-type">List</span>[<span class="hljs-built_in">int</span>]:<br>    i = <span class="hljs-number">0</span><br>    out: <span class="hljs-type">List</span>[<span class="hljs-built_in">int</span>] = []<br>    a, b = pair<br>    n = <span class="hljs-built_in">len</span>(indices)<br>    <span class="hljs-keyword">while</span> i &lt; n:<br>        <span class="hljs-keyword">if</span> i &lt; n - <span class="hljs-number">1</span> <span class="hljs-keyword">and</span> indices[i] == a <span class="hljs-keyword">and</span> indices[i + <span class="hljs-number">1</span>] == b:<br>            out.append(new_index)  <span class="hljs-comment"># @inspect out</span><br>            i += <span class="hljs-number">2</span><br>        <span class="hljs-keyword">else</span>:<br>            out.append(indices[i])  <span class="hljs-comment"># @inspect out</span><br>            i += <span class="hljs-number">1</span><br>    <span class="hljs-keyword">return</span> out<br><br><span class="hljs-keyword">def</span> <span class="hljs-title function_">train_bpe</span>(<span class="hljs-params">string: <span class="hljs-built_in">str</span>, num_merges: <span class="hljs-built_in">int</span></span>) -&gt; BPETokenizerParams:  <span class="hljs-comment"># @inspect string, @inspect num_merges</span><br>    <span class="hljs-comment"># Start with the list of bytes of string.</span><br>    indices = <span class="hljs-built_in">list</span>(<span class="hljs-built_in">map</span>(<span class="hljs-built_in">int</span>, string.encode(<span class="hljs-string">&quot;utf-8&quot;</span>)))  <span class="hljs-comment"># @inspect indices</span><br>    merges: <span class="hljs-type">Dict</span>[<span class="hljs-type">Tuple</span>[<span class="hljs-built_in">int</span>, <span class="hljs-built_in">int</span>], <span class="hljs-built_in">int</span>] = &#123;&#125;  <span class="hljs-comment"># index1, index2 =&gt; merged index  # @inspect merges</span><br>    vocab: <span class="hljs-type">Dict</span>[<span class="hljs-built_in">int</span>, <span class="hljs-built_in">bytes</span>] = &#123;x: <span class="hljs-built_in">bytes</span>([x]) <span class="hljs-keyword">for</span> x <span class="hljs-keyword">in</span> <span class="hljs-built_in">range</span>(<span class="hljs-number">256</span>)&#125;  <span class="hljs-comment"># index -&gt; bytes  # @inspect vocab</span><br>    next_index = <span class="hljs-number">256</span><br>    <span class="hljs-keyword">for</span> i <span class="hljs-keyword">in</span> <span class="hljs-built_in">range</span>(num_merges):<br>        <span class="hljs-keyword">if</span> <span class="hljs-built_in">len</span>(indices) &lt; <span class="hljs-number">2</span>:<br>            <span class="hljs-keyword">break</span><br>        <span class="hljs-comment"># Count the number of occurrences of each pair of tokens</span><br>        counts: <span class="hljs-type">Dict</span>[<span class="hljs-type">Tuple</span>[<span class="hljs-built_in">int</span>, <span class="hljs-built_in">int</span>], <span class="hljs-built_in">int</span>] = defaultdict(<span class="hljs-built_in">int</span>)<br>        <span class="hljs-keyword">for</span> index1, index2 <span class="hljs-keyword">in</span> <span class="hljs-built_in">zip</span>(indices, indices[<span class="hljs-number">1</span>:]):  <span class="hljs-comment"># For each adjacent pair</span><br>            counts[(index1, index2)] += <span class="hljs-number">1</span>  <span class="hljs-comment"># @inspect counts</span><br>        <span class="hljs-keyword">if</span> <span class="hljs-keyword">not</span> counts:<br>            <span class="hljs-keyword">break</span><br>        <span class="hljs-comment"># Find the most common pair.</span><br>        pair = <span class="hljs-built_in">max</span>(counts, key=counts.get)  <span class="hljs-comment"># @inspect pair</span><br>        index1, index2 = pair<br>        <span class="hljs-comment"># Merge that pair.</span><br>        new_index = next_index  <span class="hljs-comment"># @inspect new_index</span><br>        next_index += <span class="hljs-number">1</span><br>        merges[pair] = new_index  <span class="hljs-comment"># @inspect merges</span><br>        vocab[new_index] = vocab[index1] + vocab[index2]  <span class="hljs-comment"># @inspect vocab</span><br>        indices = merge(indices, pair, new_index)  <span class="hljs-comment"># @inspect indices</span><br>    <span class="hljs-keyword">return</span> BPETokenizerParams(vocab=vocab, merges=merges)<br><br><span class="hljs-keyword">if</span> __name__ == <span class="hljs-string">&quot;__main__&quot;</span>:<br>    s = <span class="hljs-string">&quot;banana bandana&quot;</span><br>    params = train_bpe(s, num_merges=<span class="hljs-number">10</span>)<br>    <span class="hljs-built_in">print</span>(<span class="hljs-string">&quot;Final merges:&quot;</span>, params.merges)<br>    <span class="hljs-built_in">print</span>(<span class="hljs-string">&quot;Final vocab size:&quot;</span>, <span class="hljs-built_in">len</span>(params.vocab))<br></code></pre></td></tr></table></figure>
+
+<h4 id="3-2-BPE-算法实现中的性能问题"><a href="#3-2-BPE-算法实现中的性能问题" class="headerlink" title="3.2 BPE 算法实现中的性能问题"></a>3.2 BPE 算法实现中的性能问题</h4><p>上述 naive 的BPE实现虽然在原理上正确，但在处理大规模语料库时存在严重的性能瓶颈。这些问题主要集中在BPE核心更新循环的四个步骤中：</p>
+<p><strong>1. 统计相邻 token pair 频率的低效率</strong></p>
+<p>当前实现中的 <code>for index1, index2 in zip(indices, indices[1:]): counts[(index1, index2)] += 1</code> 在每次迭代时都要完整遍历整个序列来重新统计所有token对的频率。这种全量统计的方式时间复杂度为O(n)，而整个BPE训练过程需要进行m次合并，总体复杂度达到O(n×m)。实际上，每次合并后只有与被合并token对相关的频率会发生变化，大量的重复计算造成了严重的性能浪费。</p>
+<p><strong>2. 找出最高频token pair的搜索效率问题</strong></p>
+<p>在编码阶段查找合并规则的优先级时，使用了 <code>list(self.params.merges.keys()).index(pair)</code> 这样的O(n)线性搜索。每次编码都需要进行多次这样的搜索，随着合并规则数量的增加，性能会显著下降。</p>
+<p><strong>3. 更新序列时的语义边界问题</strong></p>
+<p>直接对整个文本的字节序列进行合并会导致跨词边界的错误合并，产生语义上不合理的token。例如，”dog!”和”dog.”可能会被分配完全不同的token ID，尽管它们在语义上高度相似。</p>
+<p><strong>4. 缺乏特殊token处理</strong></p>
+<p>当前实现无法处理文档边界、特殊标记等，这在处理多文档语料库时会导致跨文档的错误合并，破坏语义边界。</p>
+<p>这些问题的核心在于缺乏预分词(pre-tokenization)步骤和高效的数据结构。解决思路包括：引入预分词来减少统计范围并保持语义边界；使用增量更新只计算受影响的token对频率；预计算合并规则优先级以消除线性搜索；以及在特殊token边界处进行分块处理。具体的优化实现将在3.3节中详细介绍。</p>
+<h4 id="3-3-BPE性能优化的解决方案"><a href="#3-3-BPE性能优化的解决方案" class="headerlink" title="3.3 BPE性能优化的解决方案"></a>3.3 BPE性能优化的解决方案</h4><p>针对3.2节中提到的四个核心性能问题，我们需要采用系统性的优化策略。这些优化不仅能显著提升BPE训练和推理的效率，还能改善分词的质量和语义一致性。</p>
+<p>在此之前，我们先以一个具体的例子来展示 BPE 算法在处理大规模语料库时的性能表现，以此作为 Baseline 来验证我们逐步的优化效果。<br>语料库我们选用 cs336 课程中提供的一个小型语料库<a target="_blank" rel="noopener" href="https://github.com/stanford-cs336/assignment1-basics/blob/main/tests/fixtures/corpus.en">corpus.en</a>，该语料库包含 1000 个英文句子，每个句子包含若干个单词。</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><code class="hljs python"><span class="hljs-keyword">with</span> <span class="hljs-built_in">open</span>(input_path, <span class="hljs-string">&quot;r&quot;</span>, encoding=<span class="hljs-string">&quot;utf-8&quot;</span>) <span class="hljs-keyword">as</span> f:<br>    text = f.read()<br></code></pre></td></tr></table></figure>
+
+<p>将上述代码读取的字符串转换为 UTF-8 字节序列，并进行 BPE 训练。把 vocab_size 训练到 500 时停止训练，测得训练时间约为 5.63 秒。<br>初始的词汇表大小为 256，训练后词汇表大小为 500，即总共进行 500-256&#x3D;244 次合并。</p>
+<h5 id="3-3-1-引入预分词-Pre-tokenization"><a href="#3-3-1-引入预分词-Pre-tokenization" class="headerlink" title="3.3.1 引入预分词(Pre-tokenization)"></a>3.3.1 引入预分词(Pre-tokenization)</h5><p><strong>问题根源</strong>：直接对整个文本的字节序列进行BPE训练会导致计算效率低下和语义边界破坏。</p>
+<p><strong>解决方案</strong>：在BPE训练之前引入预分词步骤，将文本按照语义边界分割成预token。</p>
+<p>现代BPE实现（如GPT-2的tiktoken）使用基于正则表达式的预分词器：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br></pre></td><td class="code"><pre><code class="hljs python"><span class="hljs-keyword">import</span> regex <span class="hljs-keyword">as</span> re<br><br><span class="hljs-comment"># GPT-2风格的预分词正则表达式</span><br>PAT = <span class="hljs-string">r&quot;&quot;&quot;&#x27;(?:[sdmt]|ll|ve|re)| ?\p&#123;L&#125;+| ?\p&#123;N&#125;+| ?[^\s\p&#123;L&#125;\p&#123;N&#125;]+|\s+(?!\S)|\s+&quot;&quot;&quot;</span><br><br><span class="hljs-keyword">def</span> <span class="hljs-title function_">pre_tokenize</span>(<span class="hljs-params">text: <span class="hljs-built_in">str</span></span>) -&gt; <span class="hljs-type">List</span>[<span class="hljs-built_in">str</span>]:<br>    <span class="hljs-string">&quot;&quot;&quot;使用正则表达式进行预分词&quot;&quot;&quot;</span><br>    <span class="hljs-keyword">return</span> re.findall(PAT, text)<br><br><span class="hljs-keyword">def</span> <span class="hljs-title function_">train_bpe_with_pretokenization</span>(<span class="hljs-params">text: <span class="hljs-built_in">str</span>, num_merges: <span class="hljs-built_in">int</span></span>) -&gt; BPETokenizerParams:<br>    <span class="hljs-comment"># 1. 预分词：将文本分割为语义单元</span><br>    pre_tokens = pre_tokenize(text)<br>    <br>    <span class="hljs-comment"># 2. 将每个预token转换为字节序列</span><br>    all_indices = []<br>    <span class="hljs-keyword">for</span> token <span class="hljs-keyword">in</span> pre_tokens:<br>        indices = <span class="hljs-built_in">list</span>(<span class="hljs-built_in">map</span>(<span class="hljs-built_in">int</span>, token.encode(<span class="hljs-string">&quot;utf-8&quot;</span>)))<br>        all_indices.extend(indices)<br>        all_indices.append(SPECIAL_TOKEN_ID)  <span class="hljs-comment"># 添加分隔符防止跨边界合并</span><br>    <br>    <span class="hljs-comment"># 3. 在预分词的基础上进行BPE训练</span><br>    <span class="hljs-keyword">return</span> train_bpe_on_indices(all_indices, num_merges)<br></code></pre></td></tr></table></figure>
+
+<p><strong>优势</strong>：</p>
+<ul>
+<li>减少了需要统计的token对数量，提高计算效率</li>
+<li>保持语义边界完整性，避免跨词的错误合并</li>
+<li>支持特殊token的正确处理</li>
+</ul>
+<h5 id="3-3-2-增量频率统计优化"><a href="#3-3-2-增量频率统计优化" class="headerlink" title="3.3.2 增量频率统计优化"></a>3.3.2 增量频率统计优化</h5><p><strong>问题根源</strong>：每次合并后重新统计所有token对频率，造成O(n×m)的时间复杂度。</p>
+<p><strong>解决方案</strong>：采用增量更新策略，只更新受合并影响的token对频率。</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br></pre></td><td class="code"><pre><code class="hljs python"><span class="hljs-keyword">def</span> <span class="hljs-title function_">incremental_merge_with_frequency_update</span>(<span class="hljs-params"></span><br><span class="hljs-params">    indices: <span class="hljs-type">List</span>[<span class="hljs-built_in">int</span>], </span><br><span class="hljs-params">    pair_to_merge: <span class="hljs-type">Tuple</span>[<span class="hljs-built_in">int</span>, <span class="hljs-built_in">int</span>], </span><br><span class="hljs-params">    new_index: <span class="hljs-built_in">int</span>,</span><br><span class="hljs-params">    counts: <span class="hljs-type">Dict</span>[<span class="hljs-type">Tuple</span>[<span class="hljs-built_in">int</span>, <span class="hljs-built_in">int</span>], <span class="hljs-built_in">int</span>]</span><br><span class="hljs-params"></span>) -&gt; <span class="hljs-type">Tuple</span>[<span class="hljs-type">List</span>[<span class="hljs-built_in">int</span>], <span class="hljs-type">Dict</span>[<span class="hljs-type">Tuple</span>[<span class="hljs-built_in">int</span>, <span class="hljs-built_in">int</span>], <span class="hljs-built_in">int</span>]]:<br>    <span class="hljs-string">&quot;&quot;&quot;增量更新频率统计的合并操作&quot;&quot;&quot;</span><br>    a, b = pair_to_merge<br>    new_indices = []<br>    i = <span class="hljs-number">0</span><br>    <br>    <span class="hljs-keyword">while</span> i &lt; <span class="hljs-built_in">len</span>(indices):<br>        <span class="hljs-keyword">if</span> i &lt; <span class="hljs-built_in">len</span>(indices) - <span class="hljs-number">1</span> <span class="hljs-keyword">and</span> indices[i] == a <span class="hljs-keyword">and</span> indices[i + <span class="hljs-number">1</span>] == b:<br>            <span class="hljs-comment"># 更新受影响的频率计数</span><br>            <span class="hljs-comment"># 移除旧的相邻对</span><br>            <span class="hljs-keyword">if</span> i &gt; <span class="hljs-number">0</span>:<br>                old_left_pair = (indices[i-<span class="hljs-number">1</span>], a)<br>                counts[old_left_pair] = <span class="hljs-built_in">max</span>(<span class="hljs-number">0</span>, counts[old_left_pair] - <span class="hljs-number">1</span>)<br>            <span class="hljs-keyword">if</span> i + <span class="hljs-number">2</span> &lt; <span class="hljs-built_in">len</span>(indices):<br>                old_right_pair = (b, indices[i+<span class="hljs-number">2</span>])<br>                counts[old_right_pair] = <span class="hljs-built_in">max</span>(<span class="hljs-number">0</span>, counts[old_right_pair] - <span class="hljs-number">1</span>)<br>            <br>            <span class="hljs-comment"># 添加新的相邻对</span><br>            <span class="hljs-keyword">if</span> i &gt; <span class="hljs-number">0</span>:<br>                new_left_pair = (indices[i-<span class="hljs-number">1</span>], new_index)<br>                counts[new_left_pair] += <span class="hljs-number">1</span><br>            <span class="hljs-keyword">if</span> i + <span class="hljs-number">2</span> &lt; <span class="hljs-built_in">len</span>(indices):<br>                new_right_pair = (new_index, indices[i+<span class="hljs-number">2</span>])<br>                counts[new_right_pair] += <span class="hljs-number">1</span><br>            <br>            new_indices.append(new_index)<br>            i += <span class="hljs-number">2</span><br>        <span class="hljs-keyword">else</span>:<br>            new_indices.append(indices[i])<br>            i += <span class="hljs-number">1</span><br>    <br>    <span class="hljs-comment"># 移除被合并的pair</span><br>    counts[pair_to_merge] = <span class="hljs-number">0</span><br>    <br>    <span class="hljs-keyword">return</span> new_indices, counts<br></code></pre></td></tr></table></figure>
+
+<p><strong>优势</strong>：</p>
+<ul>
+<li>将频率更新的时间复杂度从O(n)降低到O(k)，其中k是受影响的token对数量</li>
+<li>显著减少重复计算，特别是在大规模语料库上效果明显</li>
+</ul>
+<h5 id="3-3-3-预计算合并规则优先级"><a href="#3-3-3-预计算合并规则优先级" class="headerlink" title="3.3.3 预计算合并规则优先级"></a>3.3.3 预计算合并规则优先级</h5><p><strong>问题根源</strong>：编码时使用线性搜索查找合并规则优先级，复杂度为O(n)。</p>
+<p><strong>解决方案</strong>：在训练完成后预计算所有合并规则的优先级映射。</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br></pre></td><td class="code"><pre><code class="hljs python"><span class="hljs-meta">@dataclass(<span class="hljs-params">frozen=<span class="hljs-literal">True</span></span>)</span><br><span class="hljs-keyword">class</span> <span class="hljs-title class_">OptimizedBPETokenizerParams</span>:<br>    vocab: <span class="hljs-type">Dict</span>[<span class="hljs-built_in">int</span>, <span class="hljs-built_in">bytes</span>]<br>    merges: <span class="hljs-type">Dict</span>[<span class="hljs-type">Tuple</span>[<span class="hljs-built_in">int</span>, <span class="hljs-built_in">int</span>], <span class="hljs-built_in">int</span>]<br>    merge_priorities: <span class="hljs-type">Dict</span>[<span class="hljs-type">Tuple</span>[<span class="hljs-built_in">int</span>, <span class="hljs-built_in">int</span>], <span class="hljs-built_in">int</span>]  <span class="hljs-comment"># 新增：预计算的优先级</span><br><br><span class="hljs-keyword">def</span> <span class="hljs-title function_">create_optimized_params</span>(<span class="hljs-params">params: BPETokenizerParams</span>) -&gt; OptimizedBPETokenizerParams:<br>    <span class="hljs-string">&quot;&quot;&quot;为BPE参数添加预计算的优先级映射&quot;&quot;&quot;</span><br>    merge_priorities = &#123;&#125;<br>    <span class="hljs-keyword">for</span> priority, pair <span class="hljs-keyword">in</span> <span class="hljs-built_in">enumerate</span>(params.merges.keys()):<br>        merge_priorities[pair] = priority<br>    <br>    <span class="hljs-keyword">return</span> OptimizedBPETokenizerParams(<br>        vocab=params.vocab,<br>        merges=params.merges,<br>        merge_priorities=merge_priorities<br>    )<br><br><span class="hljs-keyword">def</span> <span class="hljs-title function_">encode_optimized</span>(<span class="hljs-params">text: <span class="hljs-built_in">str</span>, params: OptimizedBPETokenizerParams</span>) -&gt; <span class="hljs-type">List</span>[<span class="hljs-built_in">int</span>]:<br>    <span class="hljs-string">&quot;&quot;&quot;使用预计算优先级的高效编码&quot;&quot;&quot;</span><br>    pre_tokens = pre_tokenize(text)<br>    all_indices = []<br>    <br>    <span class="hljs-keyword">for</span> token <span class="hljs-keyword">in</span> pre_tokens:<br>        indices = <span class="hljs-built_in">list</span>(<span class="hljs-built_in">map</span>(<span class="hljs-built_in">int</span>, token.encode(<span class="hljs-string">&quot;utf-8&quot;</span>)))<br>        <br>        <span class="hljs-keyword">while</span> <span class="hljs-built_in">len</span>(indices) &gt;= <span class="hljs-number">2</span>:<br>            <span class="hljs-comment"># 找到所有可能的合并对及其优先级</span><br>            pairs_with_priority = []<br>            <span class="hljs-keyword">for</span> i <span class="hljs-keyword">in</span> <span class="hljs-built_in">range</span>(<span class="hljs-built_in">len</span>(indices) - <span class="hljs-number">1</span>):<br>                pair = (indices[i], indices[i + <span class="hljs-number">1</span>])<br>                <span class="hljs-keyword">if</span> pair <span class="hljs-keyword">in</span> params.merge_priorities:<br>                    pairs_with_priority.append((params.merge_priorities[pair], i, pair))<br>            <br>            <span class="hljs-keyword">if</span> <span class="hljs-keyword">not</span> pairs_with_priority:<br>                <span class="hljs-keyword">break</span><br>            <br>            <span class="hljs-comment"># 选择优先级最高的合并对（优先级数字越小越优先）</span><br>            _, merge_idx, pair_to_merge = <span class="hljs-built_in">min</span>(pairs_with_priority)<br>            new_token = params.merges[pair_to_merge]<br>            <br>            <span class="hljs-comment"># 执行合并</span><br>            indices = indices[:merge_idx] + [new_token] + indices[merge_idx + <span class="hljs-number">2</span>:]<br>        <br>        all_indices.extend(indices)<br>    <br>    <span class="hljs-keyword">return</span> all_indices<br></code></pre></td></tr></table></figure>
+
+<p><strong>优势</strong>：</p>
+<ul>
+<li>将查找合并规则的时间复杂度从O(n)降低到O(1)</li>
+<li>编码速度显著提升，特别是在词汇表较大时</li>
+</ul>
+<h5 id="3-3-4-特殊token和边界处理"><a href="#3-3-4-特殊token和边界处理" class="headerlink" title="3.3.4 特殊token和边界处理"></a>3.3.4 特殊token和边界处理</h5><p><strong>问题根源</strong>：缺乏对文档边界和特殊token的处理机制。</p>
+<p><strong>解决方案</strong>：引入特殊token系统和边界感知的处理机制。</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br></pre></td><td class="code"><pre><code class="hljs python"><span class="hljs-keyword">class</span> <span class="hljs-title class_">SpecialTokens</span>:<br>    ENDOFTEXT = <span class="hljs-string">&quot;&lt;|endoftext|&gt;&quot;</span><br>    PADDING = <span class="hljs-string">&quot;&lt;|pad|&gt;&quot;</span><br>    UNKNOWN = <span class="hljs-string">&quot;&lt;|unk|&gt;&quot;</span><br><br><span class="hljs-keyword">def</span> <span class="hljs-title function_">train_bpe_with_special_tokens</span>(<span class="hljs-params"></span><br><span class="hljs-params">    documents: <span class="hljs-type">List</span>[<span class="hljs-built_in">str</span>], </span><br><span class="hljs-params">    num_merges: <span class="hljs-built_in">int</span>,</span><br><span class="hljs-params">    special_tokens: <span class="hljs-type">List</span>[<span class="hljs-built_in">str</span>] = <span class="hljs-literal">None</span></span><br><span class="hljs-params"></span>) -&gt; OptimizedBPETokenizerParams:<br>    <span class="hljs-string">&quot;&quot;&quot;支持特殊token的BPE训练&quot;&quot;&quot;</span><br>    <span class="hljs-keyword">if</span> special_tokens <span class="hljs-keyword">is</span> <span class="hljs-literal">None</span>:<br>        special_tokens = [SpecialTokens.ENDOFTEXT]<br>    <br>    <span class="hljs-comment"># 为特殊token分配ID</span><br>    special_token_ids = &#123;&#125;<br>    next_special_id = <span class="hljs-number">256</span> + num_merges<br>    <span class="hljs-keyword">for</span> token <span class="hljs-keyword">in</span> special_tokens:<br>        special_token_ids[token] = next_special_id<br>        next_special_id += <span class="hljs-number">1</span><br>    <br>    <span class="hljs-comment"># 处理多文档语料库</span><br>    all_indices = []<br>    <span class="hljs-keyword">for</span> doc <span class="hljs-keyword">in</span> documents:<br>        <span class="hljs-comment"># 预分词</span><br>        pre_tokens = pre_tokenize(doc)<br>        <br>        <span class="hljs-comment"># 转换为字节序列</span><br>        <span class="hljs-keyword">for</span> token <span class="hljs-keyword">in</span> pre_tokens:<br>            indices = <span class="hljs-built_in">list</span>(<span class="hljs-built_in">map</span>(<span class="hljs-built_in">int</span>, token.encode(<span class="hljs-string">&quot;utf-8&quot;</span>)))<br>            all_indices.extend(indices)<br>        <br>        <span class="hljs-comment"># 在文档间添加特殊token</span><br>        all_indices.append(special_token_ids[SpecialTokens.ENDOFTEXT])<br>    <br>    <span class="hljs-comment"># 在特殊token边界处分块进行BPE训练</span><br>    <span class="hljs-keyword">return</span> train_bpe_with_boundaries(all_indices, num_merges, special_token_ids)<br></code></pre></td></tr></table></figure>
+
+<p><strong>优势</strong>：</p>
+<ul>
+<li>正确处理文档边界，避免跨文档的错误合并</li>
+<li>支持特殊token，增强模型的表达能力</li>
+<li>提供更好的语义一致性</li>
+</ul>
+<h5 id="3-3-5-综合性能提升"><a href="#3-3-5-综合性能提升" class="headerlink" title="3.3.5 综合性能提升"></a>3.3.5 综合性能提升</h5><p>通过上述四个方面的优化，我们可以实现：</p>
+<ol>
+<li><strong>训练效率提升</strong>：从O(n×m)降低到接近O(n+m)的时间复杂度</li>
+<li><strong>编码效率提升</strong>：从O(n×v)降低到O(n×log v)，其中v是词汇表大小</li>
+<li><strong>内存效率提升</strong>：减少重复计算和存储需求</li>
+<li><strong>质量提升</strong>：更好的语义边界保持和特殊token支持</li>
+</ol>
+<p>这些优化使得BPE分词器能够高效处理大规模语料库，同时保持良好的分词质量，为现代大语言模型提供了坚实的基础。</p>
+
+                
+              </div>
+            
+            <hr/>
+            <div>
+              <div class="post-metas my-3">
+  
+  
+</div>
+
+
+              
+  
+
+  <div class="license-box my-3">
+    <div class="license-title">
+      <div>tokenization</div>
+      <div>https://scratch-ml.github.io/2025/09/28/tokenization/</div>
+    </div>
+    <div class="license-meta">
+      
+        <div class="license-meta-item">
+          <div>作者</div>
+          <div>MingliangLi</div>
+        </div>
+      
+      
+        <div class="license-meta-item license-meta-date">
+          <div>发布于</div>
+          <div>2025年9月28日</div>
+        </div>
+      
+      
+      
+        <div class="license-meta-item">
+          <div>许可协议</div>
+          <div>
+            
+              
+              
+                <a class="print-no-link" target="_blank" href="https://creativecommons.org/licenses/by/4.0/">
+                  <span class="hint--top hint--rounded" aria-label="BY - 署名">
+                    <i class="iconfont icon-cc-by"></i>
+                  </span>
+                </a>
+              
+            
+          </div>
+        </div>
+      
+    </div>
+    <div class="license-icon iconfont"></div>
+  </div>
+
+
+
+              
+                <div class="post-prevnext my-3">
+                  <article class="post-prev col-6">
+                    
+                    
+                      <a href="/2025/10/03/leetcode/" title="leetcode">
+                        <i class="iconfont icon-arrowleft"></i>
+                        <span class="hidden-mobile">leetcode</span>
+                        <span class="visible-mobile">上一篇</span>
+                      </a>
+                    
+                  </article>
+                  <article class="post-next col-6">
+                    
+                    
+                      <a href="/2025/09/24/openai-interfaces/" title="OpenAI 接口演进">
+                        <span class="hidden-mobile">OpenAI 接口演进</span>
+                        <span class="visible-mobile">下一篇</span>
+                        <i class="iconfont icon-arrowright"></i>
+                      </a>
+                    
+                  </article>
+                </div>
+              
+            </div>
+
+            
+          </article>
+        </div>
+      </div>
+    </div>
+
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+  <aside class="sidebar" style="margin-left: -1rem">
+    <div id="toc">
+  <p class="toc-header">
+    <i class="iconfont icon-list"></i>
+    <span>目录</span>
+  </p>
+  <div class="toc-body" id="toc-body"></div>
+</div>
+
+
+
+  </aside>
+
+
+    </div>
+  </div>
+</div>
+
+
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+  
+  
+
+
+
+
+
+
+
+
+
+    
+
+    
+      <a id="scroll-top-button" aria-label="TOP" href="#" role="button">
+        <i class="iconfont icon-arrowup" aria-hidden="true"></i>
+      </a>
+    
+
+    
+      <div class="modal fade" id="modalSearch" tabindex="-1" role="dialog" aria-labelledby="ModalLabel"
+     aria-hidden="true">
+  <div class="modal-dialog modal-dialog-scrollable modal-lg" role="document">
+    <div class="modal-content">
+      <div class="modal-header text-center">
+        <h4 class="modal-title w-100 font-weight-bold">搜索</h4>
+        <button type="button" id="local-search-close" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body mx-3">
+        <div class="md-form mb-5">
+          <input type="text" id="local-search-input" class="form-control validate">
+          <label data-error="x" data-success="v" for="local-search-input">关键词</label>
+        </div>
+        <div class="list-group" id="local-search-result"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+    
+
+    
+  </main>
+
+  <footer>
+    <div class="footer-inner">
+  
+    <div class="footer-content">
+       <a href="https://hexo.io" target="_blank" rel="nofollow noopener"><span>Hexo</span></a> <i class="iconfont icon-love"></i> <a href="https://github.com/fluid-dev/hexo-theme-fluid" target="_blank" rel="nofollow noopener"><span>Fluid</span></a> 
+    </div>
+  
+  
+  
+</div>
+
+  </footer>
+
+  <!-- Scripts -->
+  
+  <script  src="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.js" ></script>
+  <link  rel="stylesheet" href="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.css" />
+
+  <script>
+    NProgress.configure({"showSpinner":false,"trickleSpeed":100})
+    NProgress.start()
+    window.addEventListener('load', function() {
+      NProgress.done();
+    })
+  </script>
+
+
+<script  src="https://lib.baomitu.com/jquery/3.6.4/jquery.min.js" ></script>
+<script  src="https://lib.baomitu.com/twitter-bootstrap/4.6.1/js/bootstrap.min.js" ></script>
+<script  src="/js/events.js" ></script>
+<script  src="/js/plugins.js" ></script>
+
+
+
+
+
+  
+    <script  src="/js/img-lazyload.js" ></script>
+  
+
+
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/tocbot/4.20.1/tocbot.min.js', function() {
+    var toc = jQuery('#toc');
+    if (toc.length === 0 || !window.tocbot) { return; }
+    var boardCtn = jQuery('#board-ctn');
+    var boardTop = boardCtn.offset().top;
+
+    window.tocbot.init(Object.assign({
+      tocSelector     : '#toc-body',
+      contentSelector : '.markdown-body',
+      linkClass       : 'tocbot-link',
+      activeLinkClass : 'tocbot-active-link',
+      listClass       : 'tocbot-list',
+      isCollapsedClass: 'tocbot-is-collapsed',
+      collapsibleClass: 'tocbot-is-collapsible',
+      scrollSmooth    : true,
+      includeTitleTags: true,
+      headingsOffset  : -boardTop,
+    }, CONFIG.toc));
+    if (toc.find('.toc-list-item').length > 0) {
+      toc.css('visibility', 'visible');
+    }
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('tocbot' in window) {
+        tocbot.refresh();
+        var toc = jQuery('#toc');
+        if (toc.length === 0 || !tocbot) {
+          return;
+        }
+        if (toc.find('.toc-list-item').length > 0) {
+          toc.css('visibility', 'visible');
+        }
+      }
+    });
+  });
+</script>
+
+
+  <script src=https://lib.baomitu.com/clipboard.js/2.0.11/clipboard.min.js></script>
+
+  <script>Fluid.plugins.codeWidget();</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/anchor-js/5.0.0/anchor.min.js', function() {
+    window.anchors.options = {
+      placement: CONFIG.anchorjs.placement,
+      visible  : CONFIG.anchorjs.visible
+    };
+    if (CONFIG.anchorjs.icon) {
+      window.anchors.options.icon = CONFIG.anchorjs.icon;
+    }
+    var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+    var res = [];
+    for (var item of el) {
+      res.push('.markdown-body > ' + item.trim());
+    }
+    if (CONFIG.anchorjs.placement === 'left') {
+      window.anchors.options.class = 'anchorjs-link-left';
+    }
+    window.anchors.add(res.join(', '));
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('anchors' in window) {
+        anchors.removeAll();
+        var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+        var res = [];
+        for (var item of el) {
+          res.push('.markdown-body > ' + item.trim());
+        }
+        if (CONFIG.anchorjs.placement === 'left') {
+          anchors.options.class = 'anchorjs-link-left';
+        }
+        anchors.add(res.join(', '));
+      }
+    });
+  });
+</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.js', function() {
+    Fluid.plugins.fancyBox();
+  });
+</script>
+
+
+  <script>Fluid.plugins.imageCaption();</script>
+
+  
+      <script>
+        if (!window.MathJax) {
+          window.MathJax = {
+            tex    : {
+              inlineMath: { '[+]': [['$', '$']] }
+            },
+            loader : {
+              load: ['ui/lazy']
+            },
+            options: {
+              renderActions: {
+                insertedScript: [200, () => {
+                  document.querySelectorAll('mjx-container').forEach(node => {
+                    let target = node.parentNode;
+                    if (target.nodeName.toLowerCase() === 'li') {
+                      target.parentNode.classList.add('has-jax');
+                    }
+                  });
+                }, '', false]
+              }
+            }
+          };
+        } else {
+          MathJax.startup.document.state(0);
+          MathJax.texReset();
+          MathJax.typeset();
+          MathJax.typesetPromise();
+        }
+
+        Fluid.events.registerRefreshCallback(function() {
+          if ('MathJax' in window && MathJax.startup.document && typeof MathJax.startup.document.state === 'function') {
+            MathJax.startup.document.state(0);
+            MathJax.texReset();
+            MathJax.typeset();
+            MathJax.typesetPromise();
+          }
+        });
+      </script>
+    
+
+  <script  src="https://lib.baomitu.com/mathjax/3.2.2/es5/tex-mml-chtml.js" ></script>
+
+  <script  src="/js/local-search.js" ></script>
+
+
+
+
+
+<!-- 主题的启动项，将它保持在最底部 -->
+<!-- the boot of the theme, keep it at the bottom -->
+<script  src="/js/boot.js" ></script>
+
+
+  
+
+  <noscript>
+    <div class="noscript-warning">博客在允许 JavaScript 运行的环境下浏览效果更佳</div>
+  </noscript>
+</body>
+</html>

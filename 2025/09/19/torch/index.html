@@ -1,0 +1,796 @@
+
+
+<!DOCTYPE html>
+<html lang="zh-CN" data-default-color-scheme=auto>
+
+
+
+<head>
+  <meta charset="UTF-8">
+
+  <link rel="apple-touch-icon" sizes="76x76" href="/img/fluid.png">
+  <link rel="icon" href="/img/fluid.png">
+  
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, shrink-to-fit=no">
+  <meta http-equiv="x-ua-compatible" content="ie=edge">
+  
+  <meta name="theme-color" content="#2f4154">
+  <meta name="author" content="MingliangLi">
+  <meta name="keywords" content="">
+  
+    <meta name="description" content="讲座概览（PyTorch 与资源核算） 目标：自底向上梳理从张量到模型、优化器再到训练循环的全部原语，并始终进行资源核算。 两类关键资源： Memory（GB）：参数、梯度、优化器状态、激活。 Compute（FLOPs）：前向、反向主导于大矩阵乘。   不展开 Transformer 细节，聚焦通用原语与心智模型。  Tensors Basics张量与内存（dtype 与动态范围） 创建：ten">
+<meta property="og:type" content="article">
+<meta property="og:title" content="torch">
+<meta property="og:url" content="https://scratch-ml.github.io/2025/09/19/torch/index.html">
+<meta property="og:site_name" content="ScratchML">
+<meta property="og:description" content="讲座概览（PyTorch 与资源核算） 目标：自底向上梳理从张量到模型、优化器再到训练循环的全部原语，并始终进行资源核算。 两类关键资源： Memory（GB）：参数、梯度、优化器状态、激活。 Compute（FLOPs）：前向、反向主导于大矩阵乘。   不展开 Transformer 细节，聚焦通用原语与心智模型。  Tensors Basics张量与内存（dtype 与动态范围） 创建：ten">
+<meta property="og:locale" content="zh_CN">
+<meta property="article:published_time" content="2025-09-18T18:24:50.000Z">
+<meta property="article:modified_time" content="2025-09-23T16:55:56.983Z">
+<meta property="article:author" content="MingliangLi">
+<meta name="twitter:card" content="summary_large_image">
+  
+  
+  
+  <title>torch - ScratchML</title>
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/twitter-bootstrap/4.6.1/css/bootstrap.min.css" />
+
+
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/github-markdown-css/4.0.0/github-markdown.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/hint.css/2.7.0/hint.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.css" />
+
+
+
+<!-- 主题依赖的图标库，不要自行修改 -->
+<!-- Do not modify the link that theme dependent icons -->
+
+<link rel="stylesheet" href="//at.alicdn.com/t/c/font_1749284_5i9bdhy70f8.css">
+
+
+
+<link rel="stylesheet" href="//at.alicdn.com/t/c/font_1736178_k526ubmyhba.css">
+
+
+<link  rel="stylesheet" href="/css/main.css" />
+
+
+  <link id="highlight-css" rel="stylesheet" href="/css/highlight.css" />
+  
+    <link id="highlight-css-dark" rel="stylesheet" href="/css/highlight-dark.css" />
+  
+
+
+
+
+  <script id="fluid-configs">
+    var Fluid = window.Fluid || {};
+    Fluid.ctx = Object.assign({}, Fluid.ctx)
+    var CONFIG = {"hostname":"scratch-ml.github.io","root":"/","version":"1.9.8","typing":{"enable":false,"typeSpeed":70,"cursorChar":"_","loop":false,"scope":[]},"anchorjs":{"enable":true,"element":"h1,h2,h3,h4,h5,h6","placement":"left","visible":"hover","icon":""},"progressbar":{"enable":true,"height_px":3,"color":"#29d","options":{"showSpinner":false,"trickleSpeed":100}},"code_language":{"enable":true,"default":"TEXT"},"copy_btn":true,"image_caption":{"enable":true},"image_zoom":{"enable":true,"img_url_replace":["",""]},"toc":{"enable":true,"placement":"right","headingSelector":"h1,h2,h3,h4,h5,h6","collapseDepth":0},"lazyload":{"enable":true,"loading_img":"/img/loading.gif","onlypost":false,"offset_factor":2},"web_analytics":{"enable":false,"follow_dnt":true,"baidu":null,"google":{"measurement_id":null},"tencent":{"sid":null,"cid":null},"leancloud":{"app_id":null,"app_key":null,"server_url":null,"path":"window.location.pathname","ignore_local":false},"umami":{"src":null,"website_id":null,"domains":null,"start_time":"2024-01-01T00:00:00.000Z","token":null,"api_server":null}},"search_path":"/local-search.xml","include_content_in_search":true};
+
+    if (CONFIG.web_analytics.follow_dnt) {
+      var dntVal = navigator.doNotTrack || window.doNotTrack || navigator.msDoNotTrack;
+      Fluid.ctx.dnt = dntVal && (dntVal.startsWith('1') || dntVal.startsWith('yes') || dntVal.startsWith('on'));
+    }
+  </script>
+  <script  src="/js/utils.js" ></script>
+  <script  src="/js/color-schema.js" ></script>
+  
+
+
+  
+<meta name="generator" content="Hexo 7.3.0"></head>
+
+
+<body>
+  
+
+  <header>
+    
+
+<div class="header-inner" style="height: 30vh;">
+  <nav id="navbar" class="navbar fixed-top  navbar-expand-lg navbar-dark scrolling-navbar">
+  <div class="container">
+    <a class="navbar-brand" href="/">
+      <strong>ScratchML</strong>
+    </a>
+
+    <button id="navbar-toggler-btn" class="navbar-toggler" type="button" data-toggle="collapse"
+            data-target="#navbarSupportedContent"
+            aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+      <div class="animated-icon"><span></span><span></span><span></span></div>
+    </button>
+
+    <!-- Collapsible content -->
+    <div class="collapse navbar-collapse" id="navbarSupportedContent">
+      <ul class="navbar-nav ml-auto text-center">
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/" target="_self">
+                <i class="iconfont icon-home-fill"></i>
+                <span>首页</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/archives/" target="_self">
+                <i class="iconfont icon-archive-fill"></i>
+                <span>归档</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/tags/" target="_self">
+                <i class="iconfont icon-tags-fill"></i>
+                <span>标签</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/about/" target="_self">
+                <i class="iconfont icon-user-fill"></i>
+                <span>关于</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/links/" target="_self">
+                <i class="iconfont icon-link-fill"></i>
+                <span>友链</span>
+              </a>
+            </li>
+          
+        
+        
+          <li class="nav-item" id="search-btn">
+            <a class="nav-link" target="_self" href="javascript:;" data-toggle="modal" data-target="#modalSearch" aria-label="Search">
+              <i class="iconfont icon-search"></i>
+            </a>
+          </li>
+          
+        
+        
+          <li class="nav-item" id="color-toggle-btn">
+            <a class="nav-link" target="_self" href="javascript:;" aria-label="Color Toggle">
+              <i class="iconfont icon-dark" id="color-toggle-icon"></i>
+            </a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+</nav>
+
+  
+
+<div id="banner" class="banner" parallax=true
+     style="background: url('/img/default.png') no-repeat center center; background-size: cover;">
+  <div class="full-bg-img">
+    <div class="mask flex-center" style="background-color: rgba(0, 0, 0, 0.3)">
+      <div class="banner-text text-center fade-in-up">
+        <div class="h2">
+          
+            <span id="subtitle">torch</span>
+          
+        </div>
+
+        
+          
+  <div class="mt-3">
+    
+    
+      <span class="post-meta">
+        <i class="iconfont icon-date-fill" aria-hidden="true"></i>
+        <time datetime="2025-09-19 02:24" pubdate>
+          2025年9月19日 凌晨
+        </time>
+      </span>
+    
+  </div>
+
+  <div class="mt-1">
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-chart"></i>
+        
+          2.4k 字
+        
+      </span>
+    
+
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-clock-fill"></i>
+        
+        
+        
+          20 分钟
+        
+      </span>
+    
+
+    
+    
+  </div>
+
+
+        
+      </div>
+
+      
+    </div>
+  </div>
+</div>
+
+</div>
+
+  </header>
+
+  <main>
+    
+      
+
+<div class="container-fluid nopadding-x">
+  <div class="row nomargin-x">
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+
+    </div>
+
+    <div class="col-lg-8 nopadding-x-md">
+      <div class="container nopadding-x-md" id="board-ctn">
+        <div id="board">
+          <article class="post-content mx-auto">
+            <h1 id="seo-header">torch</h1>
+            
+            
+              <div class="markdown-body">
+                
+                <h2 id="讲座概览（PyTorch-与资源核算）"><a href="#讲座概览（PyTorch-与资源核算）" class="headerlink" title="讲座概览（PyTorch 与资源核算）"></a>讲座概览（PyTorch 与资源核算）</h2><ul>
+<li>目标：自底向上梳理从张量到模型、优化器再到训练循环的全部原语，并始终进行资源核算。</li>
+<li>两类关键资源：<ul>
+<li>Memory（GB）：参数、梯度、优化器状态、激活。</li>
+<li>Compute（FLOPs）：前向、反向主导于大矩阵乘。</li>
+</ul>
+</li>
+<li>不展开 Transformer 细节，聚焦通用原语与心智模型。</li>
+</ul>
+<h2 id="Tensors-Basics"><a href="#Tensors-Basics" class="headerlink" title="Tensors Basics"></a>Tensors Basics</h2><h3 id="张量与内存（dtype-与动态范围）"><a href="#张量与内存（dtype-与动态范围）" class="headerlink" title="张量与内存（dtype 与动态范围）"></a>张量与内存（dtype 与动态范围）</h3><ul>
+<li>创建：<code>tensor/zeros/ones/randn/empty</code>；<code>empty</code> 仅分配不初始化，便于自定义初始化（如 <code>nn.init.trunc_normal_</code>）。</li>
+<li>dtype 与内存：float32(4B)、float16(2B)、bfloat16(2B)、fp8(1B)。<ul>
+<li>float16 小数动态范围差，易下溢：如 <code>torch.tensor([1e-8], dtype=torch.float16) == 0</code>。</li>
+<li>bfloat16 动态范围≈float32，数值更稳；分辨率差些但对 DL 影响小。</li>
+<li>FP8（H100 支持 E4M3&#x2F;E5M2）需配合库（如 Transformer Engine）谨慎使用。</li>
+</ul>
+</li>
+<li>张量内存：<code>x.numel() * x.element_size()</code>；大型线性层权重可达 GB 量级。</li>
+</ul>
+<h3 id="Tensors-on-GPUs"><a href="#Tensors-on-GPUs" class="headerlink" title="Tensors on GPUs"></a>Tensors on GPUs</h3><ul>
+<li>设备：<code>device = &#39;cuda&#39; if torch.cuda.is_available() else &#39;cpu&#39;</code>；<code>x.to(device, non_blocking=True)</code>。</li>
+<li>直接在 GPU 上创建：<code>torch.zeros(..., device=&#39;cuda:0&#39;)</code>。</li>
+<li>固定内存 + 异步拷贝：<code>DataLoader(pin_memory=True)</code> 配合 <code>.to(..., non_blocking=True)</code>。</li>
+<li>监测：<code>torch.cuda.memory_allocated()</code>、<code>max_memory_allocated()</code>；必要时 <code>torch.cuda.synchronize()</code> 计时。</li>
+</ul>
+<h3 id="Storage-stride"><a href="#Storage-stride" class="headerlink" title="Storage&#x2F;stride"></a>Storage&#x2F;stride</h3><p>PyTorch 的 Tensor 是指向存储的指针 + 访问元数据<br>什么是 stride？<code>stride(dim)</code> 决定相邻步长</p>
+<ul>
+<li>核心概念：在 PyTorch（和 NumPy）里，stride 表示在内存中沿着某一维度前进一步，需要跨过多少个“元素”的距离。不是字节数，是元素步长。</li>
+<li>若元素大小为 element_size 字节，那么字节步长为 stride[i] * element_size。</li>
+</ul>
+<p>和 shape 的关系（默认连续 C-order）：<br>对一个形状为 (d0, d1, …, dn-1) 的张量，如果它是连续的（contiguous），则有：</p>
+<ul>
+<li>stride[n-1] &#x3D; 1</li>
+<li>stride[n-2] &#x3D; d[n-1]</li>
+<li>stride[n-3] &#x3D; d[n-2] * d[n-1]</li>
+<li>以此类推（前一维的步长是后面所有维度大小的乘积）</li>
+</ul>
+<h3 id="tensor-slicing"><a href="#tensor-slicing" class="headerlink" title="tensor slicing"></a>tensor slicing</h3><p>许多操作仅仅是对 tensor 创造了不同的<code>view</code>，而不是创建新的 tensor。因为不涉及到任何 copy，所以一个 tensor 的变化可能会影响其他 tensor。</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br></pre></td><td class="code"><pre><code class="hljs python"><span class="hljs-keyword">import</span> torch<br><br><span class="hljs-keyword">def</span> <span class="hljs-title function_">same_storage</span>(<span class="hljs-params">x: torch.Tensor, y: torch.Tensor</span>):<br>    <span class="hljs-keyword">return</span> x.untyped_storage().data_ptr() == y.untyped_storage().data_ptr()<br><br>x = torch.tensor([[<span class="hljs-number">1</span>, <span class="hljs-number">2</span>, <span class="hljs-number">3</span>],[<span class="hljs-number">4</span>, <span class="hljs-number">5</span>, <span class="hljs-number">6</span>]], dtype=torch.float32)<br><br><span class="hljs-comment"># 切片得到 view（共享底层存储）</span><br>y = x[<span class="hljs-number">0</span>]<br><span class="hljs-keyword">assert</span> torch.equal(y, torch.tensor([<span class="hljs-number">1</span>, <span class="hljs-number">2</span>, <span class="hljs-number">3</span>], dtype=torch.float32))<br><span class="hljs-keyword">assert</span> same_storage(x, y)<br><br><span class="hljs-comment"># 通过 view 改变形状（仍为视图，满足连续性）</span><br>y = x.view(<span class="hljs-number">3</span>, <span class="hljs-number">2</span>)<br><span class="hljs-keyword">assert</span> torch.equal(y, torch.tensor([[<span class="hljs-number">1</span>, <span class="hljs-number">2</span>], [<span class="hljs-number">3</span>, <span class="hljs-number">4</span>], [<span class="hljs-number">5</span>, <span class="hljs-number">6</span>]], dtype=torch.float32))<br><span class="hljs-keyword">assert</span> same_storage(x, y)<br><br><span class="hljs-comment"># 修改源张量会反映到视图上（共享存储）</span><br>x[<span class="hljs-number">0</span>][<span class="hljs-number">0</span>] = <span class="hljs-number">100</span><br><span class="hljs-keyword">assert</span> y[<span class="hljs-number">0</span>][<span class="hljs-number">0</span>] == <span class="hljs-number">100</span><br></code></pre></td></tr></table></figure>
+
+
+<ul>
+<li><p>视图与拷贝：切片&#x2F;转置多为视图，共享底层存储；<code>view</code> 需 contiguous；用 <code>.contiguous()</code> 先整理。</p>
+</li>
+<li><p>常用：逐元素（<code>pow/sqrt/rsqrt/+/*</code>）、上三角 <code>triu()</code>（如构造自回归 mask）、矩阵乘 <code>@</code> 支持批维广播。</p>
+</li>
+<li><p>形状可读性：</p>
+<ul>
+<li><code>einops.einsum/reduce/rearrange</code> 用命名维度减少 <code>-1/-2</code> 混乱。</li>
+<li><code>jaxtyping</code> 仅做文档标注：<code>x: Float[torch.Tensor, &quot;batch seq hidden&quot;]</code>。</li>
+</ul>
+</li>
+</ul>
+<h3 id="命名维度：einops-与-jaxtyping-实战"><a href="#命名维度：einops-与-jaxtyping-实战" class="headerlink" title="命名维度：einops 与 jaxtyping 实战"></a>命名维度：einops 与 jaxtyping 实战</h3><p><strong>为什么需要命名维度？</strong> 传统按位置（如 <code>-1/-2</code>）索引易出错且难读。<code>einops</code> 通过“爱因斯坦求和记号”的语法为维度命名，使重排、归约与广义矩阵乘法显式、可读；<code>jaxtyping</code> 则把形状写进类型注解，作为“形状文档”。</p>
+<h4 id="动机：别再数-1-2"><a href="#动机：别再数-1-2" class="headerlink" title="动机：别再数 -1&#x2F;-2"></a>动机：别再数 -1&#x2F;-2</h4><figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><code class="hljs python"><span class="hljs-keyword">import</span> torch<br><br><span class="hljs-comment"># 传统写法：用位置维度（容易出错）</span><br>x = torch.ones(<span class="hljs-number">2</span>, <span class="hljs-number">2</span>, <span class="hljs-number">3</span>)  <span class="hljs-comment"># batch=2, seq=2, hidden=3</span><br>y = torch.ones(<span class="hljs-number">2</span>, <span class="hljs-number">2</span>, <span class="hljs-number">3</span>)  <span class="hljs-comment"># batch=2, seq=2, hidden=3</span><br>z = x @ y.transpose(-<span class="hljs-number">2</span>, -<span class="hljs-number">1</span>)  <span class="hljs-comment"># (batch, seq, seq)：这里的 -2 是 seq，-1 是 hidden</span><br><br><span class="hljs-keyword">assert</span> z.shape == (<span class="hljs-number">2</span>, <span class="hljs-number">2</span>, <span class="hljs-number">2</span>)<br></code></pre></td></tr></table></figure>
+
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><code class="hljs python"><span class="hljs-keyword">from</span> einops <span class="hljs-keyword">import</span> einsum<br><br><span class="hljs-comment"># 命名维度：显式写出含义，避免数索引</span><br>z2 = einsum(x, y, <span class="hljs-string">&quot;batch seq hidden, batch seq hidden -&gt; batch seq seq&quot;</span>)<br><span class="hljs-keyword">assert</span> torch.equal(z, z2)<br></code></pre></td></tr></table></figure>
+
+<h4 id="形状标注：jaxtyping-基础"><a href="#形状标注：jaxtyping-基础" class="headerlink" title="形状标注：jaxtyping 基础"></a>形状标注：jaxtyping 基础</h4><figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><code class="hljs python"><span class="hljs-keyword">from</span> jaxtyping <span class="hljs-keyword">import</span> Float<br><br><span class="hljs-comment"># 仅作“文档化”的形状注释（不强制检查，但极大提升可读性）</span><br>x_typed: Float[torch.Tensor, <span class="hljs-string">&quot;batch seq heads hidden&quot;</span>] = torch.ones(<span class="hljs-number">2</span>, <span class="hljs-number">2</span>, <span class="hljs-number">1</span>, <span class="hljs-number">3</span>)<br><span class="hljs-keyword">assert</span> x_typed.shape == (<span class="hljs-number">2</span>, <span class="hljs-number">2</span>, <span class="hljs-number">1</span>, <span class="hljs-number">3</span>)<br></code></pre></td></tr></table></figure>
+
+<h4 id="einsum：广义矩阵乘与良好记账"><a href="#einsum：广义矩阵乘与良好记账" class="headerlink" title="einsum：广义矩阵乘与良好记账"></a>einsum：广义矩阵乘与良好记账</h4><figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><code class="hljs python"><span class="hljs-keyword">from</span> einops <span class="hljs-keyword">import</span> einsum<br><span class="hljs-keyword">from</span> jaxtyping <span class="hljs-keyword">import</span> Float<br><br><span class="hljs-comment"># 两个序列长度不同的张量，沿 hidden 聚合，得到 (batch, seq1, seq2)</span><br>x: Float[torch.Tensor, <span class="hljs-string">&quot;batch seq1 hidden&quot;</span>] = torch.ones(<span class="hljs-number">2</span>, <span class="hljs-number">3</span>, <span class="hljs-number">4</span>)<br>y: Float[torch.Tensor, <span class="hljs-string">&quot;batch seq2 hidden&quot;</span>] = torch.ones(<span class="hljs-number">2</span>, <span class="hljs-number">5</span>, <span class="hljs-number">4</span>)<br><br><span class="hljs-comment"># 旧写法（需要转置并数轴）</span><br>z_old = x @ y.transpose(-<span class="hljs-number">2</span>, -<span class="hljs-number">1</span>)  <span class="hljs-comment"># (2, 3, 5)</span><br><br><span class="hljs-comment"># 新写法（命名维度，未出现在右侧的维度会被求和消去）</span><br>z_new = einsum(x, y, <span class="hljs-string">&quot;batch seq1 hidden, batch seq2 hidden -&gt; batch seq1 seq2&quot;</span>)<br><span class="hljs-keyword">assert</span> torch.equal(z_old, z_new)<br><br><span class="hljs-comment"># 使用省略号 ... 表示对任意前缀批维进行广播</span><br>z_broadcast = einsum(x, y, <span class="hljs-string">&quot;... seq1 hidden, ... seq2 hidden -&gt; ... seq1 seq2&quot;</span>)<br><span class="hljs-keyword">assert</span> torch.equal(z_new, z_broadcast)<br></code></pre></td></tr></table></figure>
+
+<p>规则小结：</p>
+<ul>
+<li>未在输出式中出现的命名维度会被自动求和（如上 <code>hidden</code>）。</li>
+<li><code>...</code> 代表任意数量的批维，可简洁表达广播。</li>
+</ul>
+<h4 id="reduce：显式归约"><a href="#reduce：显式归约" class="headerlink" title="reduce：显式归约"></a>reduce：显式归约</h4><figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><code class="hljs python"><span class="hljs-keyword">from</span> einops <span class="hljs-keyword">import</span> reduce<br><span class="hljs-keyword">from</span> jaxtyping <span class="hljs-keyword">import</span> Float<br><br>xr: Float[torch.Tensor, <span class="hljs-string">&quot;batch seq hidden&quot;</span>] = torch.ones(<span class="hljs-number">2</span>, <span class="hljs-number">3</span>, <span class="hljs-number">4</span>)<br><br><span class="hljs-comment"># 旧写法：按位置指定维度</span><br>y_old = xr.mean(dim=-<span class="hljs-number">1</span>)  <span class="hljs-comment"># (2, 3)</span><br><br><span class="hljs-comment"># 新写法：沿命名维度归约；&quot;... hidden -&gt; ...&quot; 表示把 hidden 维聚合掉</span><br>y_new = reduce(xr, <span class="hljs-string">&quot;... hidden -&gt; ...&quot;</span>, <span class="hljs-string">&quot;mean&quot;</span>)  <span class="hljs-comment"># 支持 &quot;sum&quot;/&quot;max&quot;/&quot;min&quot; 等</span><br><span class="hljs-keyword">assert</span> torch.equal(y_old, y_new)<br></code></pre></td></tr></table></figure>
+
+<h4 id="rearrange：拆分-合并维度以便变换"><a href="#rearrange：拆分-合并维度以便变换" class="headerlink" title="rearrange：拆分&#x2F;合并维度以便变换"></a>rearrange：拆分&#x2F;合并维度以便变换</h4><figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><code class="hljs python"><span class="hljs-keyword">from</span> einops <span class="hljs-keyword">import</span> rearrange, einsum<br><span class="hljs-keyword">from</span> jaxtyping <span class="hljs-keyword">import</span> Float<br><br><span class="hljs-comment"># 假设 total_hidden = heads * hidden1</span><br>xh: Float[torch.Tensor, <span class="hljs-string">&quot;batch seq total_hidden&quot;</span>] = torch.ones(<span class="hljs-number">2</span>, <span class="hljs-number">3</span>, <span class="hljs-number">8</span>)<br>w: Float[torch.Tensor, <span class="hljs-string">&quot;hidden1 hidden2&quot;</span>] = torch.ones(<span class="hljs-number">4</span>, <span class="hljs-number">4</span>)<br><br><span class="hljs-comment"># 1) 将扁平维度拆成命名子维（heads 与 hidden1）</span><br>xh = rearrange(xh, <span class="hljs-string">&quot;... (heads hidden1) -&gt; ... heads hidden1&quot;</span>, heads=<span class="hljs-number">2</span>)  <span class="hljs-comment"># (2, 3, 2, 4)</span><br><br><span class="hljs-comment"># 2) 仅对 hidden1 维做线性变换（其余维度保持广播）</span><br>xh = einsum(xh, w, <span class="hljs-string">&quot;... hidden1, hidden1 hidden2 -&gt; ... hidden2&quot;</span>)  <span class="hljs-comment"># (2, 3, 2, 4)</span><br><br><span class="hljs-comment"># 3) 将 heads 与 hidden2 合并回单一维度，恢复扁平表示</span><br>xh = rearrange(xh, <span class="hljs-string">&quot;... heads hidden2 -&gt; ... (heads hidden2)&quot;</span>)  <span class="hljs-comment"># (2, 3, 8)</span><br></code></pre></td></tr></table></figure>
+
+<p>以上模式把“按位置的轴操作”转化为“按语义的维度操作”。配合 <code>jaxtyping</code> 的形状注释，代码含义与数据流形状一一对应，显著降低了出错与维护成本。</p>
+<h2 id="FLOPs-与-MFU（Model-FLOPs-Utilization）"><a href="#FLOPs-与-MFU（Model-FLOPs-Utilization）" class="headerlink" title="FLOPs 与 MFU（Model FLOPs Utilization）"></a>FLOPs 与 MFU（Model FLOPs Utilization）</h2><ul>
+<li>概念：<ul>
+<li>FLOPs：完成的浮点运算总数；FLOP&#x2F;s（或 FLOPS）：每秒能力。</li>
+<li>大模型训练由矩阵乘主导：<code>2*m*n*p</code>。</li>
+<li>近似：前向 2·B·#Params，反向 4·B·#Params，总计 6·B·#Params。</li>
+</ul>
+</li>
+<li>硬件峰值（示意）：A100 ≈ 312 TFLOP&#x2F;s（bf16&#x2F;fp16），H100 ≈ 1979&#x2F;2 TFLOP&#x2F;s（dense bf16&#x2F;fp16）。</li>
+<li>MFU 定义：实际 FLOP&#x2F;s ÷ 承诺（峰值）FLOP&#x2F;s；矩阵乘占比高且 dtype 充分利用（bf16 比 float32 高）时 MFU 才高。</li>
+</ul>
+<h2 id="Autograd-与梯度-FLOPs"><a href="#Autograd-与梯度-FLOPs" class="headerlink" title="Autograd 与梯度 FLOPs"></a>Autograd 与梯度 FLOPs</h2><ul>
+<li>基本用法：<code>requires_grad=True</code>；前向得 <code>loss</code> 后 <code>loss.backward()</code> 生成 <code>*.grad</code>。</li>
+<li>示例：线性 <code>pred = x @ w</code>，<code>loss = 0.5*(pred-5)^2</code>，得到 <code>w.grad = x</code>（如 <code>[1,2,3]</code>）。</li>
+<li>计算量：<ul>
+<li>前向：见上；</li>
+<li>反向：以两层线性为例，对每个参数张量的梯度与中间激活梯度都包含一次乘加，量级与前向相当或两倍；</li>
+<li>总结：前 2、反 4、合计 6（相对 #参数 与 #样本）。</li>
+</ul>
+</li>
+</ul>
+<h2 id="模型与初始化"><a href="#模型与初始化" class="headerlink" title="模型与初始化"></a>模型与初始化</h2><ul>
+<li>参数类型：<code>nn.Parameter</code>，仍是 <code>Tensor</code>；可通过 <code>state_dict()</code>&#x2F;<code>parameters()</code> 访问。</li>
+<li>稳定初始化：<code>w ~ N(0, 1/√fan_in)</code>，或 Xavier&#x2F;He 变体；可用截断正态避免离群值：<code>nn.init.trunc_normal_</code>。</li>
+<li>小线性堆叠模型（Cruncher）可用于端到端演示；记得 <code>model.to(device)</code>。</li>
+</ul>
+<h2 id="数据加载与批采样"><a href="#数据加载与批采样" class="headerlink" title="数据加载与批采样"></a>数据加载与批采样</h2><ul>
+<li>LM 数据常为 int32 序列；建议以 numpy <code>.npy</code> 或 <code>memmap</code> 存放，避免一次性加载 TB 级数据。</li>
+<li>采样批：随机起点切片拼装 <code>[B, L]</code>；GPU 异步：<code>pin_memory()</code> + <code>.to(device, non_blocking=True)</code>。</li>
+</ul>
+<h2 id="优化器与内存-计算"><a href="#优化器与内存-计算" class="headerlink" title="优化器与内存&#x2F;计算"></a>优化器与内存&#x2F;计算</h2><ul>
+<li>关系图谱：<ul>
+<li>Momentum &#x3D; SGD + 指数滑动平均(grad)</li>
+<li>AdaGrad &#x3D; SGD + 累积 grad^2</li>
+<li>RMSProp &#x3D; AdaGrad + 指数平均 grad^2</li>
+<li>Adam &#x3D; RMSProp + Momentum</li>
+</ul>
+</li>
+<li>计数（示例，float32）：<ul>
+<li>参数数 <code>#P = Σ layer_params</code>；激活数 <code>#A ≈ B×D×层数</code>；梯度与优化器状态各≈ <code>#P</code>。</li>
+<li>总显存 ≈ 4 × (#P + #A + #P + #P) bytes（不含碎片）。</li>
+<li>单步计算 ≈ 6 × B × #P FLOPs。</li>
+</ul>
+</li>
+</ul>
+<h2 id="训练循环（最小可用）"><a href="#训练循环（最小可用）" class="headerlink" title="训练循环（最小可用）"></a>训练循环（最小可用）</h2><ol>
+<li>获取 batch；2) 前向 <code>loss = F.mse_loss(...)</code>；3) 反向 <code>loss.backward()</code>；4) <code>optimizer.step()</code>；5) <code>optimizer.zero_grad(set_to_none=True)</code>。</li>
+</ol>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><code class="hljs python"><span class="hljs-comment"># 只示意关键步骤</span><br>model.train()<br><span class="hljs-keyword">for</span> step, (xb, yb) <span class="hljs-keyword">in</span> <span class="hljs-built_in">enumerate</span>(loader):<br>    xb, yb = xb.to(device, non_blocking=<span class="hljs-literal">True</span>), yb.to(device, non_blocking=<span class="hljs-literal">True</span>)<br>    pred = model(xb)<br>    loss = F.mse_loss(pred, yb)<br>    loss.backward()<br>    optimizer.step()<br>    optimizer.zero_grad(set_to_none=<span class="hljs-literal">True</span>)<br></code></pre></td></tr></table></figure>
+
+<h2 id="可重复性与确定性"><a href="#可重复性与确定性" class="headerlink" title="可重复性与确定性"></a>可重复性与确定性</h2><ul>
+<li>设种子：<code>torch.manual_seed(s)</code> &#x2F; <code>np.random.seed(s)</code> &#x2F; <code>random.seed(s)</code>。</li>
+<li>需要严格可复现可用：<code>torch.use_deterministic_algorithms(True)</code>（可能降吞吐）。</li>
+</ul>
+<h2 id="Checkpointing"><a href="#Checkpointing" class="headerlink" title="Checkpointing"></a>Checkpointing</h2><ul>
+<li>定期保存&#x2F;恢复：<code>torch.save(&#123;&#39;model&#39;: model.state_dict(), &#39;optimizer&#39;: optim.state_dict()&#125;, &#39;ckpt.pt&#39;)</code>；<code>torch.load</code> 加载。</li>
+</ul>
+<h2 id="混合精度与-FP8"><a href="#混合精度与-FP8" class="headerlink" title="混合精度与 FP8"></a>混合精度与 FP8</h2><ul>
+<li>取舍：精度↑ → 稳定&#x2F;准确↑ 但 显存&#x2F;算力↑；精度↓ 反之。</li>
+<li>策略：<ul>
+<li>前向激活用 bf16&#x2F;fp16；参数与部分归一化&#x2F;累加保持 float32 或 bf16 视稳定性。</li>
+<li>PyTorch AMP：<code>with torch.autocast(&#39;cuda&#39;, dtype=torch.bfloat16): ...</code>；fp16 需 <code>GradScaler</code>。</li>
+<li>FP8（H100）：可用 NVIDIA Transformer Engine 在线性&#x2F;注意力模块应用，需端到端数值验证。</li>
+</ul>
+</li>
+</ul>
+<h2 id="参考与延伸"><a href="#参考与延伸" class="headerlink" title="参考与延伸"></a>参考与延伸</h2><ul>
+<li>CS336 Spring 2025 课程资料与资源核算思路（PyTorch 实战导向）。</li>
+</ul>
+<h2 id="资源核算（Memory-Compute）"><a href="#资源核算（Memory-Compute）" class="headerlink" title="资源核算（Memory &amp; Compute）"></a>资源核算（Memory &amp; Compute）</h2><ul>
+<li>公式心智模型（线性&#x2F;Transformer 一阶近似）：<ul>
+<li>前向 FLOPs ≈ 2 × (#数据点&#x2F;序列标记) × (#参数)</li>
+<li>反向 FLOPs ≈ 4 × (#数据点&#x2F;序列标记) × (#参数)</li>
+<li>单步总 FLOPs ≈ 6 × (#数据点&#x2F;序列标记) × (#参数)</li>
+</ul>
+</li>
+<li>AdamW（朴素，FP32）参数侧显存：<ul>
+<li>参数 4B + 梯度 4B + 一阶矩 4B + 二阶矩 4B ≈ 16B&#x2F;参数。</li>
+<li>常见混合精度做法：参数&#x2F;梯度用 bf16(2B+2B)，但保留 FP32 master copy(4B)；显存不降太多但更快（见 Zero &#x2F; Rajbhandari 2019）。</li>
+</ul>
+</li>
+<li>激活显存：≈ batch_size × seq_len × hidden_dim × bytes × 常数系数（与层数、残差、注意力缓存相关）；可用激活检查点（重计算）换算力降显存。</li>
+</ul>
+<h3 id="粗略估算示例"><a href="#粗略估算示例" class="headerlink" title="粗略估算示例"></a>粗略估算示例</h3><ul>
+<li>训练 70B 参数模型、15T token、1024×H100、MFU≈0.5：<ul>
+<li>total_flops &#x3D; 6 × 70e9 × 15e12；</li>
+<li>每日 FLOPs &#x3D; (H100 峰值 FLOP&#x2F;s × MFU × 1024) × 86400；</li>
+<li>天数 &#x3D; total_flops &#x2F; flops_per_day。</li>
+</ul>
+</li>
+<li>8×H100 可训练的最大参数量（AdamW 朴素内存）：<ul>
+<li>每卡 80GB，总 640GB；按 16B&#x2F;参数，num_parameters ≈ 640e9 &#x2F; 16 ≈ 40e9（未计激活与碎片）。</li>
+<li>备注：若用 bf16+FP32 master，不明显省显存；激活依赖 batch&#x2F;seq，需单独核算。</li>
+</ul>
+</li>
+</ul>
+
+                
+              </div>
+            
+            <hr/>
+            <div>
+              <div class="post-metas my-3">
+  
+  
+</div>
+
+
+              
+  
+
+  <div class="license-box my-3">
+    <div class="license-title">
+      <div>torch</div>
+      <div>https://scratch-ml.github.io/2025/09/19/torch/</div>
+    </div>
+    <div class="license-meta">
+      
+        <div class="license-meta-item">
+          <div>作者</div>
+          <div>MingliangLi</div>
+        </div>
+      
+      
+        <div class="license-meta-item license-meta-date">
+          <div>发布于</div>
+          <div>2025年9月19日</div>
+        </div>
+      
+      
+      
+        <div class="license-meta-item">
+          <div>许可协议</div>
+          <div>
+            
+              
+              
+                <a class="print-no-link" target="_blank" href="https://creativecommons.org/licenses/by/4.0/">
+                  <span class="hint--top hint--rounded" aria-label="BY - 署名">
+                    <i class="iconfont icon-cc-by"></i>
+                  </span>
+                </a>
+              
+            
+          </div>
+        </div>
+      
+    </div>
+    <div class="license-icon iconfont"></div>
+  </div>
+
+
+
+              
+            </div>
+
+            
+          </article>
+        </div>
+      </div>
+    </div>
+
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+  <aside class="sidebar" style="margin-left: -1rem">
+    <div id="toc">
+  <p class="toc-header">
+    <i class="iconfont icon-list"></i>
+    <span>目录</span>
+  </p>
+  <div class="toc-body" id="toc-body"></div>
+</div>
+
+
+
+  </aside>
+
+
+    </div>
+  </div>
+</div>
+
+
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+  
+  
+
+
+
+
+
+
+
+
+
+    
+
+    
+      <a id="scroll-top-button" aria-label="TOP" href="#" role="button">
+        <i class="iconfont icon-arrowup" aria-hidden="true"></i>
+      </a>
+    
+
+    
+      <div class="modal fade" id="modalSearch" tabindex="-1" role="dialog" aria-labelledby="ModalLabel"
+     aria-hidden="true">
+  <div class="modal-dialog modal-dialog-scrollable modal-lg" role="document">
+    <div class="modal-content">
+      <div class="modal-header text-center">
+        <h4 class="modal-title w-100 font-weight-bold">搜索</h4>
+        <button type="button" id="local-search-close" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body mx-3">
+        <div class="md-form mb-5">
+          <input type="text" id="local-search-input" class="form-control validate">
+          <label data-error="x" data-success="v" for="local-search-input">关键词</label>
+        </div>
+        <div class="list-group" id="local-search-result"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+    
+
+    
+  </main>
+
+  <footer>
+    <div class="footer-inner">
+  
+    <div class="footer-content">
+       <a href="https://hexo.io" target="_blank" rel="nofollow noopener"><span>Hexo</span></a> <i class="iconfont icon-love"></i> <a href="https://github.com/fluid-dev/hexo-theme-fluid" target="_blank" rel="nofollow noopener"><span>Fluid</span></a> 
+    </div>
+  
+  
+  
+</div>
+
+  </footer>
+
+  <!-- Scripts -->
+  
+  <script  src="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.js" ></script>
+  <link  rel="stylesheet" href="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.css" />
+
+  <script>
+    NProgress.configure({"showSpinner":false,"trickleSpeed":100})
+    NProgress.start()
+    window.addEventListener('load', function() {
+      NProgress.done();
+    })
+  </script>
+
+
+<script  src="https://lib.baomitu.com/jquery/3.6.4/jquery.min.js" ></script>
+<script  src="https://lib.baomitu.com/twitter-bootstrap/4.6.1/js/bootstrap.min.js" ></script>
+<script  src="/js/events.js" ></script>
+<script  src="/js/plugins.js" ></script>
+
+
+
+
+
+  
+    <script  src="/js/img-lazyload.js" ></script>
+  
+
+
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/tocbot/4.20.1/tocbot.min.js', function() {
+    var toc = jQuery('#toc');
+    if (toc.length === 0 || !window.tocbot) { return; }
+    var boardCtn = jQuery('#board-ctn');
+    var boardTop = boardCtn.offset().top;
+
+    window.tocbot.init(Object.assign({
+      tocSelector     : '#toc-body',
+      contentSelector : '.markdown-body',
+      linkClass       : 'tocbot-link',
+      activeLinkClass : 'tocbot-active-link',
+      listClass       : 'tocbot-list',
+      isCollapsedClass: 'tocbot-is-collapsed',
+      collapsibleClass: 'tocbot-is-collapsible',
+      scrollSmooth    : true,
+      includeTitleTags: true,
+      headingsOffset  : -boardTop,
+    }, CONFIG.toc));
+    if (toc.find('.toc-list-item').length > 0) {
+      toc.css('visibility', 'visible');
+    }
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('tocbot' in window) {
+        tocbot.refresh();
+        var toc = jQuery('#toc');
+        if (toc.length === 0 || !tocbot) {
+          return;
+        }
+        if (toc.find('.toc-list-item').length > 0) {
+          toc.css('visibility', 'visible');
+        }
+      }
+    });
+  });
+</script>
+
+
+  <script src=https://lib.baomitu.com/clipboard.js/2.0.11/clipboard.min.js></script>
+
+  <script>Fluid.plugins.codeWidget();</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/anchor-js/5.0.0/anchor.min.js', function() {
+    window.anchors.options = {
+      placement: CONFIG.anchorjs.placement,
+      visible  : CONFIG.anchorjs.visible
+    };
+    if (CONFIG.anchorjs.icon) {
+      window.anchors.options.icon = CONFIG.anchorjs.icon;
+    }
+    var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+    var res = [];
+    for (var item of el) {
+      res.push('.markdown-body > ' + item.trim());
+    }
+    if (CONFIG.anchorjs.placement === 'left') {
+      window.anchors.options.class = 'anchorjs-link-left';
+    }
+    window.anchors.add(res.join(', '));
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('anchors' in window) {
+        anchors.removeAll();
+        var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+        var res = [];
+        for (var item of el) {
+          res.push('.markdown-body > ' + item.trim());
+        }
+        if (CONFIG.anchorjs.placement === 'left') {
+          anchors.options.class = 'anchorjs-link-left';
+        }
+        anchors.add(res.join(', '));
+      }
+    });
+  });
+</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.js', function() {
+    Fluid.plugins.fancyBox();
+  });
+</script>
+
+
+  <script>Fluid.plugins.imageCaption();</script>
+
+  
+      <script>
+        if (!window.MathJax) {
+          window.MathJax = {
+            tex    : {
+              inlineMath: { '[+]': [['$', '$']] }
+            },
+            loader : {
+              load: ['ui/lazy']
+            },
+            options: {
+              renderActions: {
+                insertedScript: [200, () => {
+                  document.querySelectorAll('mjx-container').forEach(node => {
+                    let target = node.parentNode;
+                    if (target.nodeName.toLowerCase() === 'li') {
+                      target.parentNode.classList.add('has-jax');
+                    }
+                  });
+                }, '', false]
+              }
+            }
+          };
+        } else {
+          MathJax.startup.document.state(0);
+          MathJax.texReset();
+          MathJax.typeset();
+          MathJax.typesetPromise();
+        }
+
+        Fluid.events.registerRefreshCallback(function() {
+          if ('MathJax' in window && MathJax.startup.document && typeof MathJax.startup.document.state === 'function') {
+            MathJax.startup.document.state(0);
+            MathJax.texReset();
+            MathJax.typeset();
+            MathJax.typesetPromise();
+          }
+        });
+      </script>
+    
+
+  <script  src="https://lib.baomitu.com/mathjax/3.2.2/es5/tex-mml-chtml.js" ></script>
+
+  <script  src="/js/local-search.js" ></script>
+
+
+
+
+
+<!-- 主题的启动项，将它保持在最底部 -->
+<!-- the boot of the theme, keep it at the bottom -->
+<script  src="/js/boot.js" ></script>
+
+
+  
+
+  <noscript>
+    <div class="noscript-warning">博客在允许 JavaScript 运行的环境下浏览效果更佳</div>
+  </noscript>
+</body>
+</html>

@@ -1,0 +1,885 @@
+
+
+<!DOCTYPE html>
+<html lang="zh-CN" data-default-color-scheme=auto>
+
+
+
+<head>
+  <meta charset="UTF-8">
+
+  <link rel="apple-touch-icon" sizes="76x76" href="/img/fluid.png">
+  <link rel="icon" href="/img/fluid.png">
+  
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, shrink-to-fit=no">
+  <meta http-equiv="x-ua-compatible" content="ie=edge">
+  
+  <meta name="theme-color" content="#2f4154">
+  <meta name="author" content="MingliangLi">
+  <meta name="keywords" content="">
+  
+    <meta name="description" content="把 vLLM 压缩到 1,200 行：nano-vLLM 的技术解读项目简介nano-vLLM 是一个轻量级的高吞吐推理引擎，旨在为低资源环境提供高性能的推理服务。它基于 vLLM 的架构，但进行了大幅简化，仅保留了核心功能，并针对低资源环境进行了优化。 本文会在通读 nano-vLLM 源码的基础上，梳理其工程骨架，并详细阐述其关键优化，包括但不限于：Paged Attention、Prefix">
+<meta property="og:type" content="article">
+<meta property="og:title" content="nano-vllm">
+<meta property="og:url" content="https://scratch-ml.github.io/2025/09/18/nano-vllm/index.html">
+<meta property="og:site_name" content="ScratchML">
+<meta property="og:description" content="把 vLLM 压缩到 1,200 行：nano-vLLM 的技术解读项目简介nano-vLLM 是一个轻量级的高吞吐推理引擎，旨在为低资源环境提供高性能的推理服务。它基于 vLLM 的架构，但进行了大幅简化，仅保留了核心功能，并针对低资源环境进行了优化。 本文会在通读 nano-vLLM 源码的基础上，梳理其工程骨架，并详细阐述其关键优化，包括但不限于：Paged Attention、Prefix">
+<meta property="og:locale" content="zh_CN">
+<meta property="article:published_time" content="2025-09-18T03:51:13.000Z">
+<meta property="article:modified_time" content="2025-09-23T16:55:40.495Z">
+<meta property="article:author" content="MingliangLi">
+<meta name="twitter:card" content="summary_large_image">
+  
+  
+  
+  <title>nano-vllm - ScratchML</title>
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/twitter-bootstrap/4.6.1/css/bootstrap.min.css" />
+
+
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/github-markdown-css/4.0.0/github-markdown.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/hint.css/2.7.0/hint.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.css" />
+
+
+
+<!-- 主题依赖的图标库，不要自行修改 -->
+<!-- Do not modify the link that theme dependent icons -->
+
+<link rel="stylesheet" href="//at.alicdn.com/t/c/font_1749284_5i9bdhy70f8.css">
+
+
+
+<link rel="stylesheet" href="//at.alicdn.com/t/c/font_1736178_k526ubmyhba.css">
+
+
+<link  rel="stylesheet" href="/css/main.css" />
+
+
+  <link id="highlight-css" rel="stylesheet" href="/css/highlight.css" />
+  
+    <link id="highlight-css-dark" rel="stylesheet" href="/css/highlight-dark.css" />
+  
+
+
+
+
+  <script id="fluid-configs">
+    var Fluid = window.Fluid || {};
+    Fluid.ctx = Object.assign({}, Fluid.ctx)
+    var CONFIG = {"hostname":"scratch-ml.github.io","root":"/","version":"1.9.8","typing":{"enable":false,"typeSpeed":70,"cursorChar":"_","loop":false,"scope":[]},"anchorjs":{"enable":true,"element":"h1,h2,h3,h4,h5,h6","placement":"left","visible":"hover","icon":""},"progressbar":{"enable":true,"height_px":3,"color":"#29d","options":{"showSpinner":false,"trickleSpeed":100}},"code_language":{"enable":true,"default":"TEXT"},"copy_btn":true,"image_caption":{"enable":true},"image_zoom":{"enable":true,"img_url_replace":["",""]},"toc":{"enable":true,"placement":"right","headingSelector":"h1,h2,h3,h4,h5,h6","collapseDepth":0},"lazyload":{"enable":true,"loading_img":"/img/loading.gif","onlypost":false,"offset_factor":2},"web_analytics":{"enable":false,"follow_dnt":true,"baidu":null,"google":{"measurement_id":null},"tencent":{"sid":null,"cid":null},"leancloud":{"app_id":null,"app_key":null,"server_url":null,"path":"window.location.pathname","ignore_local":false},"umami":{"src":null,"website_id":null,"domains":null,"start_time":"2024-01-01T00:00:00.000Z","token":null,"api_server":null}},"search_path":"/local-search.xml","include_content_in_search":true};
+
+    if (CONFIG.web_analytics.follow_dnt) {
+      var dntVal = navigator.doNotTrack || window.doNotTrack || navigator.msDoNotTrack;
+      Fluid.ctx.dnt = dntVal && (dntVal.startsWith('1') || dntVal.startsWith('yes') || dntVal.startsWith('on'));
+    }
+  </script>
+  <script  src="/js/utils.js" ></script>
+  <script  src="/js/color-schema.js" ></script>
+  
+
+
+  
+<meta name="generator" content="Hexo 7.3.0"></head>
+
+
+<body>
+  
+
+  <header>
+    
+
+<div class="header-inner" style="height: 30vh;">
+  <nav id="navbar" class="navbar fixed-top  navbar-expand-lg navbar-dark scrolling-navbar">
+  <div class="container">
+    <a class="navbar-brand" href="/">
+      <strong>ScratchML</strong>
+    </a>
+
+    <button id="navbar-toggler-btn" class="navbar-toggler" type="button" data-toggle="collapse"
+            data-target="#navbarSupportedContent"
+            aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+      <div class="animated-icon"><span></span><span></span><span></span></div>
+    </button>
+
+    <!-- Collapsible content -->
+    <div class="collapse navbar-collapse" id="navbarSupportedContent">
+      <ul class="navbar-nav ml-auto text-center">
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/" target="_self">
+                <i class="iconfont icon-home-fill"></i>
+                <span>首页</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/archives/" target="_self">
+                <i class="iconfont icon-archive-fill"></i>
+                <span>归档</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/tags/" target="_self">
+                <i class="iconfont icon-tags-fill"></i>
+                <span>标签</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/about/" target="_self">
+                <i class="iconfont icon-user-fill"></i>
+                <span>关于</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/links/" target="_self">
+                <i class="iconfont icon-link-fill"></i>
+                <span>友链</span>
+              </a>
+            </li>
+          
+        
+        
+          <li class="nav-item" id="search-btn">
+            <a class="nav-link" target="_self" href="javascript:;" data-toggle="modal" data-target="#modalSearch" aria-label="Search">
+              <i class="iconfont icon-search"></i>
+            </a>
+          </li>
+          
+        
+        
+          <li class="nav-item" id="color-toggle-btn">
+            <a class="nav-link" target="_self" href="javascript:;" aria-label="Color Toggle">
+              <i class="iconfont icon-dark" id="color-toggle-icon"></i>
+            </a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+</nav>
+
+  
+
+<div id="banner" class="banner" parallax=true
+     style="background: url('/img/default.png') no-repeat center center; background-size: cover;">
+  <div class="full-bg-img">
+    <div class="mask flex-center" style="background-color: rgba(0, 0, 0, 0.3)">
+      <div class="banner-text text-center fade-in-up">
+        <div class="h2">
+          
+            <span id="subtitle">nano-vllm</span>
+          
+        </div>
+
+        
+          
+  <div class="mt-3">
+    
+    
+      <span class="post-meta">
+        <i class="iconfont icon-date-fill" aria-hidden="true"></i>
+        <time datetime="2025-09-18 11:51" pubdate>
+          2025年9月18日 中午
+        </time>
+      </span>
+    
+  </div>
+
+  <div class="mt-1">
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-chart"></i>
+        
+          3.6k 字
+        
+      </span>
+    
+
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-clock-fill"></i>
+        
+        
+        
+          30 分钟
+        
+      </span>
+    
+
+    
+    
+  </div>
+
+
+        
+      </div>
+
+      
+    </div>
+  </div>
+</div>
+
+</div>
+
+  </header>
+
+  <main>
+    
+      
+
+<div class="container-fluid nopadding-x">
+  <div class="row nomargin-x">
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+
+    </div>
+
+    <div class="col-lg-8 nopadding-x-md">
+      <div class="container nopadding-x-md" id="board-ctn">
+        <div id="board">
+          <article class="post-content mx-auto">
+            <h1 id="seo-header">nano-vllm</h1>
+            
+            
+              <div class="markdown-body">
+                
+                <h1 id="把-vLLM-压缩到-1-200-行：nano-vLLM-的技术解读"><a href="#把-vLLM-压缩到-1-200-行：nano-vLLM-的技术解读" class="headerlink" title="把 vLLM 压缩到 1,200 行：nano-vLLM 的技术解读"></a>把 vLLM 压缩到 1,200 行：nano-vLLM 的技术解读</h1><h2 id="项目简介"><a href="#项目简介" class="headerlink" title="项目简介"></a>项目简介</h2><p>nano-vLLM 是一个轻量级的高吞吐推理引擎，旨在为低资源环境提供高性能的推理服务。它基于 vLLM 的架构，但进行了大幅简化，仅保留了核心功能，并针对低资源环境进行了优化。</p>
+<p>本文会在通读 nano-vLLM 源码的基础上，梳理其工程骨架，并详细阐述其关键优化，包括但不限于：Paged Attention、Prefix Caching、Tensor Parallelism、Torch Compile、CUDA Graph、FlashAttention 等。nano-vLLM 虽然项目体量很小，仅有约 1,200 行 Python 代码，但是却覆盖了一个现代高吞吐推理引擎的核心要素。如果希望在较短时间内理解一个推理引擎的关键路径，或把这些优化点移植到自己的系统，可以参考 nano-vLLM 项目以及本文的解读。</p>
+<p>本文将按结构→细节→实践建议的顺序展开。</p>
+<h2 id="项目一图流（结构与职责）"><a href="#项目一图流（结构与职责）" class="headerlink" title="项目一图流（结构与职责）"></a>项目一图流（结构与职责）</h2><p>当一个请求发送给 nano-vLLM 后，推理流程如下：提示词（prompts）被分词成序列（Sequences），由 LLMEngine 管理并加入等待队列；调度器（scheduler）优先处理 prefill 阶段的 Sequence，打包批次受 max_num_batched_tokens 和可用 KV blocks 约束； model runner 加载权重、分配 KV 缓存（block_manager.py），准备上下文（如 block_table、slot_mapping、cu_seqlens）；执行模型 forward 动作（qwen3.py 调用 layers&#x2F; 的 attention、linear 等），利用 FlashAttention 计算 logits；采样器（sampler.py）应用温度缩放生成新 token 并追加到序列（sequence.py）；重复 decode 步骤直到遇到 EOS 或达到 max_tokens，最终 postprocess 回收块并返回输出文本。</p>
+<p>上述全部功能所对应的所有文件协作实现高效推理：</p>
+<ul>
+<li>engine&#x2F; 目录编排整体流程</li>
+<li>layers&#x2F; 提供优化算子</li>
+<li>models&#x2F; 定义模型架构</li>
+<li>utils&#x2F; 辅助加载和上下文</li>
+</ul>
+<p>更细致的功能结构图如下：</p>
+<figure class="highlight nix"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br></pre></td><td class="code"><pre><code class="hljs nix"><span class="hljs-symbol">/data/nano-vllm</span><br>├── nanovllm<span class="hljs-symbol">/</span><br>│   ├── __init__.py                <span class="hljs-comment"># 对外导出 `LLM`, `SamplingParams`</span><br>│   ├── llm.py                     <span class="hljs-comment"># 薄封装，继承 `LLMEngine`</span><br>│   ├── config.py                  <span class="hljs-comment"># 运行配置（模型路径、并行规模、KV 块大小等）</span><br>│   ├── sampling_params.py         <span class="hljs-comment"># 采样参数（temperature / max_tokens / ignore_eos）</span><br>│   ├── engine<span class="hljs-symbol">/</span><br>│   │   ├── llm_engine.py         <span class="hljs-comment"># 引擎入口：管理请求队列、调度与生成主循环</span><br>│   │   ├── model_runner.py       <span class="hljs-comment"># 多进程/多卡、权重加载、KVCache 分配、CUDA Graph 捕获</span><br>│   │   ├── scheduler.py          <span class="hljs-comment"># 动态批调度（prefill 优先、decode 抢占）</span><br>│   │   ├── sequence.py           <span class="hljs-comment"># 序列状态与 block table（块视图）</span><br>│   │   └── block_manager.py      <span class="hljs-comment"># KV 块分配/回收 + 前缀哈希缓存（xxhash）</span><br>│   ├── layers<span class="hljs-symbol">/</span><br>│   │   ├── attention.py          <span class="hljs-comment"># Flash-Attn + Triton 写 KVCache（prefill/decode 二合一）</span><br>│   │   ├── rotary_embedding.py   <span class="hljs-comment"># RoPE（预计算 cos/sin 缓存）</span><br>│   │   ├── linear.py             <span class="hljs-comment"># 张量并行线性层（列并行/行并行/QKV 合并）</span><br>│   │   ├── layernorm.py          <span class="hljs-comment"># RMSNorm（含 residual 融合分支）</span><br>│   │   ├── embed_head.py         <span class="hljs-comment"># 词嵌入/LM Head 的词表并行</span><br>│   │   └── sampler.py            <span class="hljs-comment"># 温度缩放 + Gumbel Top-1 近似采样</span><br>│   ├── models<span class="hljs-symbol">/</span><br>│   │   └── qwen3.py              <span class="hljs-comment"># Qwen3 解码器与 CausalLM 封装</span><br>│   └── utils<span class="hljs-symbol">/</span><br>│       ├── context.py            <span class="hljs-comment"># 推理上下文（prefill/decode、块表、cu_seqlens 等）</span><br>│       └── loader.py             <span class="hljs-comment"># safetensors 权重装载（含打包权重映射）</span><br>├── example.py                    <span class="hljs-comment"># 快速上手样例（聊天模板/批量）</span><br>├── bench.py                      <span class="hljs-comment"># 吞吐 benchmark 脚本</span><br>├── README.md                     <br>└── pyproject.toml                <span class="hljs-comment"># 依赖（torch/triton/transformers/flash-attn/xxhash）</span><br></code></pre></td></tr></table></figure>
+<p>nano-vLLM 对外 API 极简：</p>
+<ul>
+<li><code>LLM</code>: 推理入口，负责模型&#x2F;分布式初始化、请求接入与调度、生成主循环与输出解码</li>
+<li><code>SamplingParams</code>: 采样与停止配置，描述“怎么生成”，如 <code>temperature</code>定义采样强度，<code>max_tokens</code>&#x2F;<code>ignore_eos</code>定义停止条件</li>
+</ul>
+<p>推理动作由 <code>LLM.generate</code> 触发，背后是调度器打包请求 → 模型前向（prefill 或 decode） → 采样（按 <code>temperature</code>） → 写回新 token；遇到 <code>eos</code>（且未忽略）或达到 <code>max_tokens</code> 时标记完成并回收 KV 块。</p>
+<h2 id="核心技术：把“该有的能力”做全"><a href="#核心技术：把“该有的能力”做全" class="headerlink" title="核心技术：把“该有的能力”做全"></a>核心技术：把“该有的能力”做全</h2><p>以下按模块与执行阶段，结合关键张量形状与内存公式做细化说明，便于对照源码迁移到其它推理框架。</p>
+<h3 id="1-Paged-Attention（分页注意力）"><a href="#1-Paged-Attention（分页注意力）" class="headerlink" title="1) Paged Attention（分页注意力）"></a>1) Paged Attention（分页注意力）</h3><blockquote>
+<p>文件：<code>layers/attention.py</code>，<code>engine/model_runner.py</code>，<code>engine/block_manager.py</code></p>
+</blockquote>
+<p>Paged Attention 将每条序列的 KVCache 按固定大小划分为“块”（blocks ≈ OS 的页），用“块表”将序列的逻辑连续块映射到物理非连续显存块。注意力计算时通过块表高效收集对应 K&#x2F;V，从而只在末尾块产生少量浪费（&lt;~4%），避免大规模过度预留与碎片；且可以支持按需分配与复用物理块，命中前缀直接共享（引用计数 + 写时复制）。</p>
+<ul>
+<li><p><strong>关键数据结构</strong></p>
+<ul>
+<li><strong>物理块（Physical Block）</strong>：容量固定，存放多 token 的 K&#x2F;V。</li>
+<li><strong>逻辑块（Logical Block）</strong>：序列视角上的连续区间。</li>
+<li><strong>块表（Block Table）</strong>：逻辑块 → 物理块映射；允许不同序列映射到同一物理块以实现前缀共享。</li>
+<li><strong>引用计数与 COW</strong>：共享块在写入时触发写时复制，保证并发安全。</li>
+<li><strong>空闲列表&#x2F;分配器</strong>：按需分配与回收，降低显存碎片。</li>
+</ul>
+</li>
+<li><p>关键数据形状：</p>
+<ul>
+<li><code>block_table: [B, max_num_blocks] (int32)</code>：每条序列的页表，-1 填充；由 <code>prepare_block_tables</code> 生成（<code>engine/model_runner.py</code>）。</li>
+<li><code>slot_mapping: [N] (int32)</code>：本步需写入的全局槽位（prefill 为所有新增 token；decode 为每序列 1 个）；槽位计算为 <code>slot = block_id * 256 + offset</code>。</li>
+<li><code>k_cache/v_cache</code>（单层视图）：<code>[num_blocks, 256, H_kv, D]</code>，源自一次性分配的 <code>[2, L, num_kvcache_blocks, 256, H_kv, D]</code></li>
+</ul>
+</li>
+<li><p>与其他模块的关系：</p>
+<ul>
+<li>页表来源：<code>engine/block_manager.py</code> 负责按 <code>block_size=256</code> 维护 <code>block_table</code>；</li>
+<li>全局 KVCache 的预算与一次性大块分配见“2) KV Cache 预算与布局”；</li>
+<li>新增 token 的 KV 写入由“4) Triton 写 KV”完成；</li>
+<li>注意力计算用“5) FlashAttention”的变长&#x2F;paged 接口。</li>
+</ul>
+</li>
+<li><p>执行路径：</p>
+<ul>
+<li>Prefill<ul>
+<li>命中前缀时：<code>cu_seqlens_k.sum() &gt; cu_seqlens_q.sum()</code>，构造 <code>block_table</code> 并将 <code>k/v</code> 直接指向全局 KVCache，仅对新增 token 追加写入。</li>
+<li>调用：<code>flash_attn_varlen_func(q, k_or_kcache, v_or_vcache, cu_seqlens_q/k, max_seqlen_q/k, block_table=..., causal=True)</code></li>
+</ul>
+</li>
+<li>Decode<ul>
+<li>每序列仅对最后一个 token 做注意力；上下文长度 <code>context_lens</code> 与 <code>block_table</code> 指明可见范围。</li>
+<li>调用：<code>flash_attn_with_kvcache(q.unsqueeze(1), k_cache, v_cache, cache_seqlens=context_lens, block_table=..., causal=True)</code></li>
+</ul>
+</li>
+<li>KV 写入<ul>
+<li>使用 Triton kernel 依据 <code>slot_mapping</code> 将 <code>[num_kv_heads*head_dim]</code> 的 K&#x2F;V 向量写到全局 KVCache 对应槽位。</li>
+</ul>
+</li>
+</ul>
+</li>
+<li><p>边界与注意：</p>
+<ul>
+<li><code>block_table</code> 需对齐每条序列当前实际页数，右侧用 -1 填充；</li>
+<li><code>slot_mapping</code> 顺序必须与本步 token 的生成顺序一致；</li>
+<li>不同序列共享相同 <code>block_id</code> 页时，读路径通过 <code>block_table</code> 自然实现复用；写路径只写新增部分，避免覆盖共享历史。</li>
+</ul>
+</li>
+</ul>
+<h3 id="2-KV-Cache-预算与布局"><a href="#2-KV-Cache-预算与布局" class="headerlink" title="2) KV Cache 预算与布局"></a>2) KV Cache 预算与布局</h3><blockquote>
+<p>文件：<code>engine/model_runner.py</code></p>
+</blockquote>
+<p>我们首先要理解一些理论计算的公式：</p>
+<ul>
+<li>单 token KV 所占用字节数目为：<code>2 * L * H_kv * D * dtype_size</code>；</li>
+<li>每个 block 存储 256 token：<code>block_bytes = 2 * L * 256 * H_kv * D * dtype_size</code>。</li>
+<li>上述公式中各个参数的意义如下：<ul>
+<li>L: 层数</li>
+<li>H_kv: KV 头数量（通常是 num_key_value_heads）</li>
+<li>D: 每个头的维度（head_dim）</li>
+<li>dtype_size: 数据类型的字节数（如 fp16&#x2F;bf16 &#x3D; 2 字节，fp32 &#x3D; 4 字节）</li>
+</ul>
+</li>
+</ul>
+<p>nano-vLLM 基于上述算式，结合 <code>mem_get_info()</code> 的 free&#x2F;total 与 <code>memory_stats()</code> 的 peak&#x2F;current，按 <code>gpu_memory_utilization</code> 求可分配块数 <code>num_kvcache_blocks</code>。</p>
+<ul>
+<li>实际分配：</li>
+</ul>
+<figure class="highlight elm"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs elm">[<span class="hljs-number">2</span>, <span class="hljs-type">L</span>, num_kvcache_blocks, <span class="hljs-number">256</span>, <span class="hljs-type">H_kv</span>, <span class="hljs-type">D</span>] @ torch_d<span class="hljs-keyword">type</span>, cuda<br></code></pre></td></tr></table></figure>
+
+<p>核心分配逻辑是把每层注意力的 <code>k_cache/v_cache</code> 绑定为上述大张量的视图以供写入。每一层注意力里的 k_cache&#x2F;v_cache 不再单独分配，而是“指向”这个大张量各自的切片（view），写入时直接写到共享缓冲区，避免碎片、提升效率。</p>
+<p>小例子:假设 L&#x3D;24, H_kv&#x3D;8, D&#x3D;128, dtype&#x3D;fp16(2B)：</p>
+<ul>
+<li>单 token ≈ 2×24×8×128×2 &#x3D; 98,304 B ≈ 96 KiB</li>
+<li>每块 256 token ≈ 24 MiB</li>
+<li>若可分 200 块，KV Cache ≈ 4.8 GiB</li>
+</ul>
+<p>这样做的好处：</p>
+<ul>
+<li>一次性大块分配，降低碎片</li>
+<li>视图切片，便于分层&#x2F;分块管理</li>
+<li>易于根据显存水位动态控制块数</li>
+</ul>
+<p>因此，整体流程未变，但内存布局与管理方式有优化。</p>
+<ul>
+<li>先用公式估算每 token &#x2F;每 block 的字节</li>
+<li>用显存信息+利用率算能分配多少块</li>
+<li>实际用一个形状为 [2, L, num_kvcache_blocks, 256, H_kv, D] 的大张量承载全部 KV，并让各层拿视图来写</li>
+</ul>
+<p>这是主流推理引擎（按块分页 KV Cache）的典型做法，便于扩展到分页、回收与调度。</p>
+<h3 id="3-前缀缓存（Prefix-Caching）"><a href="#3-前缀缓存（Prefix-Caching）" class="headerlink" title="3) 前缀缓存（Prefix Caching）"></a>3) 前缀缓存（Prefix Caching）</h3><blockquote>
+<p>文件：<code>engine/block_manager.py</code>，<code>engine/model_runner.py</code></p>
+</blockquote>
+<ul>
+<li>分块与哈希：序列按 <code>block_size=256</code> 切分，对块序列做滚动哈希（<code>xxhash.xxh64</code>）。第 i 块哈希的输入包含“第 i 块的 token bytes + 第 i-1 块的哈希”，从而 O(1) 判断“前 i 块是否一致”。</li>
+<li>分配（allocate）：命中哈希且内容一致的块直接增加 <code>ref_count</code> 并计入 <code>num_cached_tokens</code>；miss 则从 <code>free_block_ids</code> 取新块，记录到 <code>seq.block_table</code>。</li>
+<li>追加（may_append）：长度从 256k 增至 256k+1 先预分配新块；当变为整除 256 时，对“最后块”计算哈希并登记。</li>
+<li>与注意力联动：prefill 阶段向 kernel 传递 <code>block_tables: [B, max_num_blocks] (int32)</code>，命中前缀时直接将 <code>k/v</code> 指向 KVCache，避免重复计算历史 K&#x2F;V。</li>
+</ul>
+<p>更具体一些：</p>
+<ul>
+<li><p>关键数据结构：</p>
+<ul>
+<li><code>Block</code>：<code>&#123;block_id, ref_count, hash, token_ids&#125;</code>；空闲块在 <code>free_block_ids</code>，使用中在 <code>used_block_ids</code>。</li>
+<li><code>hash_to_block_id: Dict[int, int]</code>：滚动哈希到块 id 的映射（命中需二次比对 <code>token_ids</code> 防碰撞）。</li>
+<li><code>Sequence.block_table: List[int]</code>：一条序列在 KVCache 中的块 id 列表；<code>num_cached_tokens</code> 记录命中的前缀 token 数。</li>
+</ul>
+</li>
+<li><p>allocate 伪代码（摘意）：</p>
+</li>
+</ul>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><code class="hljs python">h = -<span class="hljs-number">1</span><br><span class="hljs-keyword">for</span> i <span class="hljs-keyword">in</span> <span class="hljs-built_in">range</span>(seq.num_blocks):<br>    token_ids = seq.block(i)<br>    h = compute_hash(token_ids, h) <span class="hljs-keyword">if</span> <span class="hljs-built_in">len</span>(token_ids) == block_size <span class="hljs-keyword">else</span> -<span class="hljs-number">1</span><br>    block_id = hash_to_block_id.get(h, -<span class="hljs-number">1</span>)<br>    cache_hit = (block_id != -<span class="hljs-number">1</span> <span class="hljs-keyword">and</span> blocks[block_id].token_ids == token_ids)<br>    <span class="hljs-keyword">if</span> <span class="hljs-keyword">not</span> cache_hit:<br>        block_id = free_block_ids[<span class="hljs-number">0</span>]; block = _allocate_block(block_id)<br>    <span class="hljs-keyword">else</span>:<br>        seq.num_cached_tokens += block_size<br>        block = blocks[block_id]<br>        block.ref_count = block.ref_count + <span class="hljs-number">1</span> <span class="hljs-keyword">if</span> block_id <span class="hljs-keyword">in</span> used_block_ids <span class="hljs-keyword">else</span> (_allocate_block(block_id)).ref_count<br>    <span class="hljs-keyword">if</span> h != -<span class="hljs-number">1</span>:<br>        block.update(h, token_ids); hash_to_block_id[h] = block_id<br>    seq.block_table.append(block_id)<br></code></pre></td></tr></table></figure>
+
+<ul>
+<li><p>may_append 逻辑：</p>
+<ul>
+<li>若 <code>len(seq) % block_size == 1</code>，说明新 token 落在“新块”的第一个位置，需要预分配一个空块（<code>hash == -1</code>）。</li>
+<li>若 <code>len(seq) % block_size == 0</code>，说明当前最后块被填满，计算其哈希并登记到 <code>hash_to_block_id</code>。</li>
+</ul>
+</li>
+<li><p>与 FlashAttention 的交互：</p>
+<ul>
+<li>Prefill 场景：如果 <code>cu_seqlens_k.sum() &gt; cu_seqlens_q.sum()</code>（说明命中历史前缀），<code>block_tables</code> 会被拼成 <code>[B, max_num_blocks]</code> 传入 kernel，K&#x2F;V 直接引用 KVCache。</li>
+<li>Decode 场景：通过 <code>slot_mapping: [B] (int32)</code> 指明“这个 step 写入&#x2F;读取的 KV 槽位”，形如 <code>slot = block_table[last] * 256 + (last_block_num_tokens-1)</code>。</li>
+</ul>
+</li>
+<li><p>形状对照：</p>
+<ul>
+<li><code>block_tables</code>: <code>[B, max_num_blocks] (int32)</code></li>
+<li><code>slot_mapping</code>: <code>[N] (int32)</code>，N 为本 step 写入的 token 数（prefill 为所有新增 token，decode 为 B）</li>
+<li><code>k_cache/v_cache</code>: <code>[num_layers, num_blocks, 256, num_kv_heads, head_dim]</code> 的视图（底层来自 <code>[2, L, num_kvcache_blocks, 256, H_kv, D]</code>）</li>
+</ul>
+</li>
+<li><p>一个小例子（B&#x3D;2，block_size&#x3D;4，演示方便）：</p>
+<ul>
+<li>seq A：tokens <code>a0 a1 a2 a3 | a4 a5 ...</code> → <code>block_table: [3, 7, ...]</code></li>
+<li>seq B：tokens <code>a0 a1 a2 a3 | b4 b5 ...</code>，前 4 个与 A 相同 → 第一块哈希命中，直接共享 <code>block_id=3</code>，<code>ref_count += 1</code>；第二块不同，分配新块。</li>
+</ul>
+</li>
+<li><p>边界与注意事项：</p>
+<ul>
+<li>哈希碰撞：通过“哈希命中后再比对 <code>token_ids</code>”规避错误共享；</li>
+<li>内存回收：<code>deallocate(seq)</code> 需要从后往前遍历 block table，逐块 <code>ref_count -= 1</code>，为 0 才回到 <code>free_block_ids</code>；</li>
+<li>写入顺序：Triton kernel 逐 token 写入 KVCache，所以 <code>slot_mapping</code> 必须与本步的 token 顺序一致；</li>
+<li>block_size 选择：实现中要求 <code>kvcache_block_size % 256 == 0</code>，默认 256；块太小哈希&#x2F;元数据开销偏大，块太大命中粒度变粗，二者需权衡。</li>
+</ul>
+</li>
+</ul>
+<h3 id="4-Triton-写-KV：轻量、刚好够用"><a href="#4-Triton-写-KV：轻量、刚好够用" class="headerlink" title="4) Triton 写 KV：轻量、刚好够用"></a>4) Triton 写 KV：轻量、刚好够用</h3><blockquote>
+<p>文件：<code>layers/attention.py</code></p>
+</blockquote>
+<ul>
+<li>kernel 网格：<code>(N,)</code>，N 为本次需写入 token 数；</li>
+<li>输入约束：<code>key.stride(-1)==1</code>、<code>key.stride(1)==head_dim</code> 保证内存布局有利于矢量化；</li>
+<li>逻辑：用 <code>slot_mapping[idx]</code> 计算 KV 全局偏移，将 <code>[num_heads*head_dim]</code> 的 key&#x2F;value 一次性写入 <code>k_cache/v_cache</code> 对应槽位。</li>
+</ul>
+<h3 id="5-FlashAttention：变长-prefill-增量-decode"><a href="#5-FlashAttention：变长-prefill-增量-decode" class="headerlink" title="5) FlashAttention：变长 prefill + 增量 decode"></a>5) FlashAttention：变长 prefill + 增量 decode</h3><blockquote>
+<p>文件：<code>layers/attention.py</code></p>
+</blockquote>
+<ul>
+<li>Prefill：<code>flash_attn_varlen_func(q, k, v, cu_seqlens_q/k, max_seqlen_q/k, block_table, causal=True)</code>；命中前缀时 <code>k/v</code> 直接引用 KVCache；</li>
+<li>Decode：<code>flash_attn_with_kvcache(q.unsqueeze(1), k_cache, v_cache, cache_seqlens=context_lens, block_table, causal=True)</code>；仅对最后 token 做注意力；</li>
+<li>缩放：<code>scale = 1/sqrt(D)</code>，与常规实现一致。</li>
+</ul>
+<p>Q、K、V 的形状（单步视角）：</p>
+<ul>
+<li><code>q</code>: <code>[-1, num_heads, head_dim]</code></li>
+<li><code>k/v</code>: <code>[-1, num_kv_heads, head_dim]</code></li>
+</ul>
+<h3 id="6-张量并行（Tensor-Parallelism）"><a href="#6-张量并行（Tensor-Parallelism）" class="headerlink" title="6) 张量并行（Tensor Parallelism）"></a>6) 张量并行（Tensor Parallelism）</h3><blockquote>
+<p>文件：<code>layers/linear.py</code>，<code>layers/embed_head.py</code></p>
+</blockquote>
+<ul>
+<li>列并行：切输出维，局部 <code>F.linear</code>，无需通信；</li>
+<li>行并行：切输入维，前向后 <code>all_reduce</code> 聚合（bias 只在 rank0 加）；</li>
+<li>QKV 合并：计算 Q&#x2F;K&#x2F;V 子区间偏移，加载权重时按 <code>loaded_shard_id in &#123;q,k,v&#125;</code> 精确落位；</li>
+<li>Gate&#x2F;Up 合并：一张大矩阵，运行时 <code>chunk</code> 成两支；</li>
+<li>词表并行：Embedding&#x2F;LMHead 切 vocab 维；Embedding 前向按 mask 只算本 rank 负责区间；LMHead 在 rank0 <code>gather</code> 拼回 logits。</li>
+</ul>
+<p>权重装载（<code>utils/loader.py</code>）依赖各参数注册的 <code>weight_loader</code>，以 safetensors 的 key 为导向把 shard 切到位。</p>
+<h3 id="7-CUDA-Graph：把-decode-静态化"><a href="#7-CUDA-Graph：把-decode-静态化" class="headerlink" title="7) CUDA Graph：把 decode 静态化"></a>7) CUDA Graph：把 decode 静态化</h3><blockquote>
+<p>文件：<code>engine/model_runner.py</code></p>
+</blockquote>
+<ul>
+<li>预捕获一组 batch size（<code>[1,2,4,8,16..,512]</code>）的图；</li>
+<li>捕获前准备静态形状的张量缓冲（<code>input_ids/positions/slot_mapping/context_lens/block_tables/outputs</code>），进入 <code>with torch.cuda.graph(...)</code> 执行一次前向；</li>
+<li>运行期将真实输入拷到缓冲里，调用 <code>graph.replay()</code>。</li>
+</ul>
+<p>触发条件：prefill &#x2F; <code>enforce_eager=True</code> &#x2F; <code>bs&gt;512</code> 时走 eager；其余 decode 优先复用图。</p>
+<h3 id="8-调度器：prefill-优先，decode-可抢占"><a href="#8-调度器：prefill-优先，decode-可抢占" class="headerlink" title="8) 调度器：prefill 优先，decode 可抢占"></a>8) 调度器：prefill 优先，decode 可抢占</h3><blockquote>
+<p>文件：<code>engine/scheduler.py</code></p>
+</blockquote>
+<ul>
+<li>Prefill：受 <code>max_num_batched_tokens</code>、<code>max_num_seqs</code> 与可用 KV 块约束，尽可能装满一个 step；命中前缀会减少实际计算量；</li>
+<li>Decode：若无法“追加一块”，会从运行队列尾部 <code>preempt</code> 一条，回到等待队列；</li>
+<li>Postprocess：写回新 token，遇 <code>eos</code>（且未忽略）或达上限 <code>max_tokens</code> 则完成并回收块。</li>
+</ul>
+<h3 id="9-采样器（Sampler）"><a href="#9-采样器（Sampler）" class="headerlink" title="9) 采样器（Sampler）"></a>9) 采样器（Sampler）</h3><blockquote>
+<p>文件：<code>layers/sampler.py</code></p>
+</blockquote>
+<ul>
+<li>近似 Gumbel-Top1：对 <code>logits/temperature</code> 取 softmax 得到 <code>p</code>，用 <code>Exp(1)</code> 噪声做 <code>p / exp(e)</code> 再 <code>argmax</code>，等价于 <code>argmax(log p - e)</code> 的技巧，计算量小、实现简洁。</li>
+</ul>
+<h3 id="10-RoPE-与-RMSNorm-的“小心思”"><a href="#10-RoPE-与-RMSNorm-的“小心思”" class="headerlink" title="10) RoPE 与 RMSNorm 的“小心思”"></a>10) RoPE 与 RMSNorm 的“小心思”</h3><ul>
+<li>RoPE：预计算 <code>[max_pos, 1, D]</code> 的 cos&#x2F;sin 缓存，按位置索引后做旋转；</li>
+<li>RMSNorm：提供 residual 融合路径 <code>add_rms_forward(x, residual)</code>，减少一次读写；二者均加 <code>@torch.compile</code> 便于算子融合。</li>
+</ul>
+<h3 id="11-多进程与轻量-RPC"><a href="#11-多进程与轻量-RPC" class="headerlink" title="11) 多进程与轻量 RPC"></a>11) 多进程与轻量 RPC</h3><ul>
+<li><code>LLMEngine</code> 启动 <code>tensor_parallel_size-1</code> 个子进程；</li>
+<li><code>ModelRunner</code> 初始化 NCCL、绑定 CUDA 设备；</li>
+<li>rank0 用共享内存+事件广播方法调用（控制面），各 rank 收到后执行同名方法；数据面仍走分布式张量与通信原语。</li>
+</ul>
+<h2 id="端到端执行路径（概览）"><a href="#端到端执行路径（概览）" class="headerlink" title="端到端执行路径（概览）"></a>端到端执行路径（概览）</h2><ol>
+<li>初始化：<code>LLMEngine.__init__</code> 产出 <code>Config</code>、启动子进程、在 rank0 构建 <code>ModelRunner</code>、用 <code>AutoTokenizer</code> 设置 <code>eos</code>；</li>
+<li>预热与图捕获：<code>warmup_model()</code>、<code>allocate_kv_cache()</code>、<code>capture_cudagraph()</code>（条件触发）；</li>
+<li>主循环：<code>schedule()</code> 决定 prefill&#x2F;decode 与本步序列；<code>prepare_*</code> 组装输入并 <code>set_context(...)</code>；<code>run_model()</code> 前向产出 logits；rank0 <code>Sampler</code> 采样；<code>postprocess()</code> 追加 token 与收尾回收。</li>
+</ol>
+<p>返回为 <code>[&#123;&quot;text&quot;: str, &quot;token_ids&quot;: List[int]&#125;]</code> 的列表。</p>
+<h2 id="快速上手"><a href="#快速上手" class="headerlink" title="快速上手"></a>快速上手</h2><figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><code class="hljs python"><span class="hljs-keyword">from</span> nanovllm <span class="hljs-keyword">import</span> LLM, SamplingParams<br><br>llm = LLM(<span class="hljs-string">&quot;/YOUR/MODEL/PATH&quot;</span>, enforce_eager=<span class="hljs-literal">True</span>, tensor_parallel_size=<span class="hljs-number">1</span>)<br>outputs = llm.generate([<span class="hljs-string">&quot;Hello, Nano-vLLM.&quot;</span>], SamplingParams(temperature=<span class="hljs-number">0.6</span>, max_tokens=<span class="hljs-number">256</span>))<br><br><span class="hljs-built_in">print</span>(outputs[<span class="hljs-number">0</span>][<span class="hljs-string">&quot;text&quot;</span>])<br></code></pre></td></tr></table></figure>
+
+<p>运行基准：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs bash">python bench.py<br></code></pre></td></tr></table></figure>
+
+<h2 id="实践建议"><a href="#实践建议" class="headerlink" title="实践建议"></a>实践建议</h2><ul>
+<li>调试优先：先开 <code>enforce_eager=True</code>，再逐步启用图捕获；</li>
+<li>Prefill 吞吐：适当增大 <code>max_num_batched_tokens</code>（显存允许时）；</li>
+<li>并行规模：TP&gt;1 时注意 NCCL 与 rank0 聚合（LM Head logits 聚合在 rank0）；</li>
+<li>负载特征：多轮&#x2F;长前缀复用场景，前缀缓存收益最明显。</li>
+</ul>
+<h2 id="结语"><a href="#结语" class="headerlink" title="结语"></a>结语</h2><p>nano-vLLM 以极小工程量呈现了现代推理引擎的关键路径，适合作为“源码导读”与“工程移植参考”。建议先读 <code>engine/model_runner.py</code> 与 <code>layers/attention.py</code>，一个负责“把图跑起来”，一个负责“把算子跑快”。希望这份解读能帮助读者更快地建立整体心智模型。</p>
+
+                
+              </div>
+            
+            <hr/>
+            <div>
+              <div class="post-metas my-3">
+  
+  
+</div>
+
+
+              
+  
+
+  <div class="license-box my-3">
+    <div class="license-title">
+      <div>nano-vllm</div>
+      <div>https://scratch-ml.github.io/2025/09/18/nano-vllm/</div>
+    </div>
+    <div class="license-meta">
+      
+        <div class="license-meta-item">
+          <div>作者</div>
+          <div>MingliangLi</div>
+        </div>
+      
+      
+        <div class="license-meta-item license-meta-date">
+          <div>发布于</div>
+          <div>2025年9月18日</div>
+        </div>
+      
+      
+      
+        <div class="license-meta-item">
+          <div>许可协议</div>
+          <div>
+            
+              
+              
+                <a class="print-no-link" target="_blank" href="https://creativecommons.org/licenses/by/4.0/">
+                  <span class="hint--top hint--rounded" aria-label="BY - 署名">
+                    <i class="iconfont icon-cc-by"></i>
+                  </span>
+                </a>
+              
+            
+          </div>
+        </div>
+      
+    </div>
+    <div class="license-icon iconfont"></div>
+  </div>
+
+
+
+              
+            </div>
+
+            
+          </article>
+        </div>
+      </div>
+    </div>
+
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+  <aside class="sidebar" style="margin-left: -1rem">
+    <div id="toc">
+  <p class="toc-header">
+    <i class="iconfont icon-list"></i>
+    <span>目录</span>
+  </p>
+  <div class="toc-body" id="toc-body"></div>
+</div>
+
+
+
+  </aside>
+
+
+    </div>
+  </div>
+</div>
+
+
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+  
+  
+
+
+
+
+
+
+
+
+
+    
+
+    
+      <a id="scroll-top-button" aria-label="TOP" href="#" role="button">
+        <i class="iconfont icon-arrowup" aria-hidden="true"></i>
+      </a>
+    
+
+    
+      <div class="modal fade" id="modalSearch" tabindex="-1" role="dialog" aria-labelledby="ModalLabel"
+     aria-hidden="true">
+  <div class="modal-dialog modal-dialog-scrollable modal-lg" role="document">
+    <div class="modal-content">
+      <div class="modal-header text-center">
+        <h4 class="modal-title w-100 font-weight-bold">搜索</h4>
+        <button type="button" id="local-search-close" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body mx-3">
+        <div class="md-form mb-5">
+          <input type="text" id="local-search-input" class="form-control validate">
+          <label data-error="x" data-success="v" for="local-search-input">关键词</label>
+        </div>
+        <div class="list-group" id="local-search-result"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+    
+
+    
+  </main>
+
+  <footer>
+    <div class="footer-inner">
+  
+    <div class="footer-content">
+       <a href="https://hexo.io" target="_blank" rel="nofollow noopener"><span>Hexo</span></a> <i class="iconfont icon-love"></i> <a href="https://github.com/fluid-dev/hexo-theme-fluid" target="_blank" rel="nofollow noopener"><span>Fluid</span></a> 
+    </div>
+  
+  
+  
+</div>
+
+  </footer>
+
+  <!-- Scripts -->
+  
+  <script  src="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.js" ></script>
+  <link  rel="stylesheet" href="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.css" />
+
+  <script>
+    NProgress.configure({"showSpinner":false,"trickleSpeed":100})
+    NProgress.start()
+    window.addEventListener('load', function() {
+      NProgress.done();
+    })
+  </script>
+
+
+<script  src="https://lib.baomitu.com/jquery/3.6.4/jquery.min.js" ></script>
+<script  src="https://lib.baomitu.com/twitter-bootstrap/4.6.1/js/bootstrap.min.js" ></script>
+<script  src="/js/events.js" ></script>
+<script  src="/js/plugins.js" ></script>
+
+
+
+
+
+  
+    <script  src="/js/img-lazyload.js" ></script>
+  
+
+
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/tocbot/4.20.1/tocbot.min.js', function() {
+    var toc = jQuery('#toc');
+    if (toc.length === 0 || !window.tocbot) { return; }
+    var boardCtn = jQuery('#board-ctn');
+    var boardTop = boardCtn.offset().top;
+
+    window.tocbot.init(Object.assign({
+      tocSelector     : '#toc-body',
+      contentSelector : '.markdown-body',
+      linkClass       : 'tocbot-link',
+      activeLinkClass : 'tocbot-active-link',
+      listClass       : 'tocbot-list',
+      isCollapsedClass: 'tocbot-is-collapsed',
+      collapsibleClass: 'tocbot-is-collapsible',
+      scrollSmooth    : true,
+      includeTitleTags: true,
+      headingsOffset  : -boardTop,
+    }, CONFIG.toc));
+    if (toc.find('.toc-list-item').length > 0) {
+      toc.css('visibility', 'visible');
+    }
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('tocbot' in window) {
+        tocbot.refresh();
+        var toc = jQuery('#toc');
+        if (toc.length === 0 || !tocbot) {
+          return;
+        }
+        if (toc.find('.toc-list-item').length > 0) {
+          toc.css('visibility', 'visible');
+        }
+      }
+    });
+  });
+</script>
+
+
+  <script src=https://lib.baomitu.com/clipboard.js/2.0.11/clipboard.min.js></script>
+
+  <script>Fluid.plugins.codeWidget();</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/anchor-js/5.0.0/anchor.min.js', function() {
+    window.anchors.options = {
+      placement: CONFIG.anchorjs.placement,
+      visible  : CONFIG.anchorjs.visible
+    };
+    if (CONFIG.anchorjs.icon) {
+      window.anchors.options.icon = CONFIG.anchorjs.icon;
+    }
+    var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+    var res = [];
+    for (var item of el) {
+      res.push('.markdown-body > ' + item.trim());
+    }
+    if (CONFIG.anchorjs.placement === 'left') {
+      window.anchors.options.class = 'anchorjs-link-left';
+    }
+    window.anchors.add(res.join(', '));
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('anchors' in window) {
+        anchors.removeAll();
+        var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+        var res = [];
+        for (var item of el) {
+          res.push('.markdown-body > ' + item.trim());
+        }
+        if (CONFIG.anchorjs.placement === 'left') {
+          anchors.options.class = 'anchorjs-link-left';
+        }
+        anchors.add(res.join(', '));
+      }
+    });
+  });
+</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.js', function() {
+    Fluid.plugins.fancyBox();
+  });
+</script>
+
+
+  <script>Fluid.plugins.imageCaption();</script>
+
+  
+      <script>
+        if (!window.MathJax) {
+          window.MathJax = {
+            tex    : {
+              inlineMath: { '[+]': [['$', '$']] }
+            },
+            loader : {
+              load: ['ui/lazy']
+            },
+            options: {
+              renderActions: {
+                insertedScript: [200, () => {
+                  document.querySelectorAll('mjx-container').forEach(node => {
+                    let target = node.parentNode;
+                    if (target.nodeName.toLowerCase() === 'li') {
+                      target.parentNode.classList.add('has-jax');
+                    }
+                  });
+                }, '', false]
+              }
+            }
+          };
+        } else {
+          MathJax.startup.document.state(0);
+          MathJax.texReset();
+          MathJax.typeset();
+          MathJax.typesetPromise();
+        }
+
+        Fluid.events.registerRefreshCallback(function() {
+          if ('MathJax' in window && MathJax.startup.document && typeof MathJax.startup.document.state === 'function') {
+            MathJax.startup.document.state(0);
+            MathJax.texReset();
+            MathJax.typeset();
+            MathJax.typesetPromise();
+          }
+        });
+      </script>
+    
+
+  <script  src="https://lib.baomitu.com/mathjax/3.2.2/es5/tex-mml-chtml.js" ></script>
+
+  <script  src="/js/local-search.js" ></script>
+
+
+
+
+
+<!-- 主题的启动项，将它保持在最底部 -->
+<!-- the boot of the theme, keep it at the bottom -->
+<script  src="/js/boot.js" ></script>
+
+
+  
+
+  <noscript>
+    <div class="noscript-warning">博客在允许 JavaScript 运行的环境下浏览效果更佳</div>
+  </noscript>
+</body>
+</html>

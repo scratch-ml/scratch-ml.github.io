@@ -1,0 +1,944 @@
+
+
+<!DOCTYPE html>
+<html lang="zh-CN" data-default-color-scheme=auto>
+
+
+
+<head>
+  <meta charset="UTF-8">
+
+  <link rel="apple-touch-icon" sizes="76x76" href="/img/fluid.png">
+  <link rel="icon" href="/img/fluid.png">
+  
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, shrink-to-fit=no">
+  <meta http-equiv="x-ua-compatible" content="ie=edge">
+  
+  <meta name="theme-color" content="#2f4154">
+  <meta name="author" content="MingliangLi">
+  <meta name="keywords" content="">
+  
+    <meta name="description" content="面向具有基础机器学习知识的读者，这篇文章用一文读懂三种常见的注意力（Attention）设计：Multi-Head Attention（MHA）、Multi-Query &#x2F; Grouped-Query Attention（MQA&#x2F;GQA）与 Multi-Head Latent Attention（MLA）。我们将从概念、实现细节到工程实践逐步展开，并给出可运行的 PyTorc">
+<meta property="og:type" content="article">
+<meta property="og:title" content="attention">
+<meta property="og:url" content="https://scratch-ml.github.io/2025/09/22/attention/index.html">
+<meta property="og:site_name" content="ScratchML">
+<meta property="og:description" content="面向具有基础机器学习知识的读者，这篇文章用一文读懂三种常见的注意力（Attention）设计：Multi-Head Attention（MHA）、Multi-Query &#x2F; Grouped-Query Attention（MQA&#x2F;GQA）与 Multi-Head Latent Attention（MLA）。我们将从概念、实现细节到工程实践逐步展开，并给出可运行的 PyTorc">
+<meta property="og:locale" content="zh_CN">
+<meta property="article:published_time" content="2025-09-22T06:26:27.000Z">
+<meta property="article:modified_time" content="2025-09-22T06:57:51.938Z">
+<meta property="article:author" content="MingliangLi">
+<meta name="twitter:card" content="summary_large_image">
+  
+  
+  
+  <title>attention - ScratchML</title>
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/twitter-bootstrap/4.6.1/css/bootstrap.min.css" />
+
+
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/github-markdown-css/4.0.0/github-markdown.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/hint.css/2.7.0/hint.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.css" />
+
+
+
+<!-- 主题依赖的图标库，不要自行修改 -->
+<!-- Do not modify the link that theme dependent icons -->
+
+<link rel="stylesheet" href="//at.alicdn.com/t/c/font_1749284_5i9bdhy70f8.css">
+
+
+
+<link rel="stylesheet" href="//at.alicdn.com/t/c/font_1736178_k526ubmyhba.css">
+
+
+<link  rel="stylesheet" href="/css/main.css" />
+
+
+  <link id="highlight-css" rel="stylesheet" href="/css/highlight.css" />
+  
+    <link id="highlight-css-dark" rel="stylesheet" href="/css/highlight-dark.css" />
+  
+
+
+
+
+  <script id="fluid-configs">
+    var Fluid = window.Fluid || {};
+    Fluid.ctx = Object.assign({}, Fluid.ctx)
+    var CONFIG = {"hostname":"scratch-ml.github.io","root":"/","version":"1.9.8","typing":{"enable":false,"typeSpeed":70,"cursorChar":"_","loop":false,"scope":[]},"anchorjs":{"enable":true,"element":"h1,h2,h3,h4,h5,h6","placement":"left","visible":"hover","icon":""},"progressbar":{"enable":true,"height_px":3,"color":"#29d","options":{"showSpinner":false,"trickleSpeed":100}},"code_language":{"enable":true,"default":"TEXT"},"copy_btn":true,"image_caption":{"enable":true},"image_zoom":{"enable":true,"img_url_replace":["",""]},"toc":{"enable":true,"placement":"right","headingSelector":"h1,h2,h3,h4,h5,h6","collapseDepth":0},"lazyload":{"enable":true,"loading_img":"/img/loading.gif","onlypost":false,"offset_factor":2},"web_analytics":{"enable":false,"follow_dnt":true,"baidu":null,"google":{"measurement_id":null},"tencent":{"sid":null,"cid":null},"leancloud":{"app_id":null,"app_key":null,"server_url":null,"path":"window.location.pathname","ignore_local":false},"umami":{"src":null,"website_id":null,"domains":null,"start_time":"2024-01-01T00:00:00.000Z","token":null,"api_server":null}},"search_path":"/local-search.xml","include_content_in_search":true};
+
+    if (CONFIG.web_analytics.follow_dnt) {
+      var dntVal = navigator.doNotTrack || window.doNotTrack || navigator.msDoNotTrack;
+      Fluid.ctx.dnt = dntVal && (dntVal.startsWith('1') || dntVal.startsWith('yes') || dntVal.startsWith('on'));
+    }
+  </script>
+  <script  src="/js/utils.js" ></script>
+  <script  src="/js/color-schema.js" ></script>
+  
+
+
+  
+<meta name="generator" content="Hexo 7.3.0"></head>
+
+
+<body>
+  
+
+  <header>
+    
+
+<div class="header-inner" style="height: 30vh;">
+  <nav id="navbar" class="navbar fixed-top  navbar-expand-lg navbar-dark scrolling-navbar">
+  <div class="container">
+    <a class="navbar-brand" href="/">
+      <strong>ScratchML</strong>
+    </a>
+
+    <button id="navbar-toggler-btn" class="navbar-toggler" type="button" data-toggle="collapse"
+            data-target="#navbarSupportedContent"
+            aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+      <div class="animated-icon"><span></span><span></span><span></span></div>
+    </button>
+
+    <!-- Collapsible content -->
+    <div class="collapse navbar-collapse" id="navbarSupportedContent">
+      <ul class="navbar-nav ml-auto text-center">
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/" target="_self">
+                <i class="iconfont icon-home-fill"></i>
+                <span>首页</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/archives/" target="_self">
+                <i class="iconfont icon-archive-fill"></i>
+                <span>归档</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/tags/" target="_self">
+                <i class="iconfont icon-tags-fill"></i>
+                <span>标签</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/about/" target="_self">
+                <i class="iconfont icon-user-fill"></i>
+                <span>关于</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/links/" target="_self">
+                <i class="iconfont icon-link-fill"></i>
+                <span>友链</span>
+              </a>
+            </li>
+          
+        
+        
+          <li class="nav-item" id="search-btn">
+            <a class="nav-link" target="_self" href="javascript:;" data-toggle="modal" data-target="#modalSearch" aria-label="Search">
+              <i class="iconfont icon-search"></i>
+            </a>
+          </li>
+          
+        
+        
+          <li class="nav-item" id="color-toggle-btn">
+            <a class="nav-link" target="_self" href="javascript:;" aria-label="Color Toggle">
+              <i class="iconfont icon-dark" id="color-toggle-icon"></i>
+            </a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+</nav>
+
+  
+
+<div id="banner" class="banner" parallax=true
+     style="background: url('/img/default.png') no-repeat center center; background-size: cover;">
+  <div class="full-bg-img">
+    <div class="mask flex-center" style="background-color: rgba(0, 0, 0, 0.3)">
+      <div class="banner-text text-center fade-in-up">
+        <div class="h2">
+          
+            <span id="subtitle">attention</span>
+          
+        </div>
+
+        
+          
+  <div class="mt-3">
+    
+    
+      <span class="post-meta">
+        <i class="iconfont icon-date-fill" aria-hidden="true"></i>
+        <time datetime="2025-09-22 14:26" pubdate>
+          2025年9月22日 下午
+        </time>
+      </span>
+    
+  </div>
+
+  <div class="mt-1">
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-chart"></i>
+        
+          3.6k 字
+        
+      </span>
+    
+
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-clock-fill"></i>
+        
+        
+        
+          31 分钟
+        
+      </span>
+    
+
+    
+    
+  </div>
+
+
+        
+      </div>
+
+      
+    </div>
+  </div>
+</div>
+
+</div>
+
+  </header>
+
+  <main>
+    
+      
+
+<div class="container-fluid nopadding-x">
+  <div class="row nomargin-x">
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+
+    </div>
+
+    <div class="col-lg-8 nopadding-x-md">
+      <div class="container nopadding-x-md" id="board-ctn">
+        <div id="board">
+          <article class="post-content mx-auto">
+            <h1 id="seo-header">attention</h1>
+            
+            
+              <div class="markdown-body">
+                
+                <blockquote>
+<p>面向具有基础机器学习知识的读者，这篇文章用一文读懂三种常见的注意力（Attention）设计：Multi-Head Attention（MHA）、Multi-Query &#x2F; Grouped-Query Attention（MQA&#x2F;GQA）与 Multi-Head Latent Attention（MLA）。我们将从概念、实现细节到工程实践逐步展开，并给出可运行的 PyTorch 参考实现片段与选型建议。</p>
+</blockquote>
+<p>小预告：三者的差异，核心都在“Key&#x2F;Value 的形状与缓存（KV Cache）如何设计”。这会直接影响显存占用、带宽与解码吞吐。</p>
+<hr>
+<h3 id="MHA"><a href="#MHA" class="headerlink" title="MHA"></a>MHA</h3><p>MHA（Multi-Head Attention）是 Transformer 的标准注意力。它把隐藏维度 <code>D_model</code> 切成 <code>num_heads</code> 个头，每个头的维度为 <code>head_dim = D_model / num_heads</code>，分别计算自注意力，再拼回输出。</p>
+<ul>
+<li>基本公式（单层、忽略 bias）：<ul>
+<li>线性变换：<code>Q = X · W_Q</code>, <code>K = X · W_K</code>, <code>V = X · W_V</code></li>
+<li>形状：<code>X: [B, T, D_model]</code>，<code>Q/K/V: [B, T, num_heads, head_dim]</code></li>
+<li>打分与归一化：<code>Attn = softmax((Q · K^T) / sqrt(head_dim))</code></li>
+<li>聚合：<code>Y_head = Attn · V</code>，拼接各头后：<code>Y = Concat(Y_head) · W_O</code></li>
+</ul>
+</li>
+</ul>
+<h4 id="基本公式与符号说明"><a href="#基本公式与符号说明" class="headerlink" title="基本公式与符号说明"></a>基本公式与符号说明</h4><p>公式（自注意力，单层、忽略偏置项）：</p>
+<ul>
+<li>生成投影：<code>Q = X · W_Q</code>，<code>K = X · W_K</code>，<code>V = X · W_V</code></li>
+<li>注意力权重：<code>A = softmax((Q · K^T) / sqrt(D_h) + mask)</code></li>
+<li>聚合输出：<code>Y_head = A · V</code>，<code>Y = Concat(Y_head) · W_O</code></li>
+</ul>
+<p>符号与含义：</p>
+<ul>
+<li><code>X</code>：输入序列表示，形状 <code>[B, T, D_model]</code></li>
+<li><code>B / T / D_model</code>：分别是 batch 大小 &#x2F; 序列长度 &#x2F; 模型隐藏维</li>
+<li><code>num_heads = H</code>：头数；<code>head_dim = D_h = D_model / H</code></li>
+<li><code>W_Q, W_K, W_V</code>：投影矩阵，形状分别为 <code>[D_model, H·D_h]</code></li>
+<li><code>W_O</code>：输出映射矩阵，形状 <code>[H·D_h, D_model]</code></li>
+<li><code>Q, K, V</code>：投影后的查询&#x2F;键&#x2F;值，重排后形状为 <code>[B, H, T, D_h]</code></li>
+<li><code>K^T</code>：在最后两维上转置，形状 <code>[B, H, D_h, T]</code></li>
+<li><code>A</code>（或 <code>Attn</code>）：注意力权重，<code>A = softmax((Q · K^T)/sqrt(D_h) + mask)</code>，形状 <code>[B, H, T, T]</code></li>
+<li><code>mask</code>：掩码项；自回归解码使用因果掩码以禁止看见未来位置</li>
+<li><code>sqrt(D_h)</code>：缩放因子，稳定梯度与数值范围</li>
+<li><code>Y_head = A · V</code>：聚合后的每个头的输出，形状 <code>[B, H, T, D_h]</code></li>
+<li><code>Concat(Y_head)</code>：沿头维拼接回 <code>[B, T, H·D_h]</code></li>
+</ul>
+<p>直观理解：<code>Q</code> 表示“当前位在找谁”，<code>K</code> 表示“我是谁（可被匹配的特征）”，<code>V</code> 是“被带走的内容”。<code>A</code> 是对序列位置的分布，表示关注强度；<code>Y</code> 是对 <code>V</code> 的加权求和后，再经 <code>W_O</code> 融合各头的信息。</p>
+<ul>
+<li><p>复杂度与内存：</p>
+<ul>
+<li>计算复杂度（自回归、单步解码忽略前向）：主要在打分与乘积上，和 <code>num_heads</code> 成正比。</li>
+<li>KV Cache（推理时缓存 K&#x2F;V 以便后续解码复用）：单 token 占用近似为 <code>2 * L * H * D_h * dtype_size</code> 字节（2 表示 K 与 V，<code>L</code> 为层数，<code>H</code> 为注意力头数，<code>D_h</code> 为每头维度）。</li>
+</ul>
+</li>
+<li><p>PyTorch 参考实现（解码掩码的标准 MHA）：</p>
+</li>
+</ul>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br></pre></td><td class="code"><pre><code class="hljs python"><span class="hljs-keyword">import</span> torch<br><span class="hljs-keyword">import</span> torch.nn <span class="hljs-keyword">as</span> nn<br><span class="hljs-keyword">import</span> torch.nn.functional <span class="hljs-keyword">as</span> F<br><br>B, T, D_model = <span class="hljs-number">2</span>, <span class="hljs-number">16</span>, <span class="hljs-number">1024</span><br>num_heads = <span class="hljs-number">16</span><br>head_dim = D_model // num_heads<br><br>x = torch.randn(B, T, D_model)<br>W_qkv = nn.Linear(D_model, <span class="hljs-number">3</span> * D_model, bias=<span class="hljs-literal">False</span>)<br>W_o = nn.Linear(D_model, D_model, bias=<span class="hljs-literal">False</span>)<br><br>qkv = W_qkv(x)  <span class="hljs-comment"># [B, T, 3*D]</span><br>q, k, v = qkv.split(D_model, dim=-<span class="hljs-number">1</span>)<br><br><span class="hljs-keyword">def</span> <span class="hljs-title function_">split_heads</span>(<span class="hljs-params">t</span>):<br>    <span class="hljs-keyword">return</span> t.view(B, T, num_heads, head_dim).transpose(<span class="hljs-number">1</span>, <span class="hljs-number">2</span>)  <span class="hljs-comment"># [B, H, T, Dh]</span><br><br>q = split_heads(q)<br>k = split_heads(k)<br>v = split_heads(v)<br><br>scores = torch.matmul(q, k.transpose(-<span class="hljs-number">2</span>, -<span class="hljs-number">1</span>)) / (head_dim ** <span class="hljs-number">0.5</span>)  <span class="hljs-comment"># [B, H, T, T]</span><br>causal_mask = torch.triu(torch.ones(T, T, dtype=torch.<span class="hljs-built_in">bool</span>), diagonal=<span class="hljs-number">1</span>)<br>scores = scores.masked_fill(causal_mask, <span class="hljs-built_in">float</span>(<span class="hljs-string">&#x27;-inf&#x27;</span>))<br>attn = F.softmax(scores, dim=-<span class="hljs-number">1</span>)<br>y = torch.matmul(attn, v)  <span class="hljs-comment"># [B, H, T, Dh]</span><br>y = y.transpose(<span class="hljs-number">1</span>, <span class="hljs-number">2</span>).contiguous().view(B, T, D_model)<br>out = W_o(y)<br></code></pre></td></tr></table></figure>
+
+<ul>
+<li>什么时候用 MHA：<ul>
+<li>训练与开源大模型默认配置；</li>
+<li>推理对延迟容忍度较高、显存充足；</li>
+<li>不追求极致的 KV Cache 压缩。</li>
+</ul>
+</li>
+</ul>
+<hr>
+<h3 id="MQA-GQA"><a href="#MQA-GQA" class="headerlink" title="MQA&#x2F;GQA"></a>MQA&#x2F;GQA</h3><p>MQA（Multi-Query Attention）与 GQA（Grouped-Query Attention）的核心思想：减少 Key&#x2F;Value 的“头数”，让多组 Query 共享更少组的 K&#x2F;V，从而显著降低 KV Cache 占用与带宽，提升解码吞吐。</p>
+<ul>
+<li><p>概念对比：</p>
+<ul>
+<li>MQA：<code>num_kv_heads = 1</code>，所有 Query 头共享同一组 K&#x2F;V。</li>
+<li>GQA：<code>num_kv_heads = H_kv &lt; num_heads</code>，每 <code>group_size = num_heads / H_kv</code> 个 Query 头共享一组 K&#x2F;V。</li>
+</ul>
+</li>
+<li><p>形状与映射：</p>
+<ul>
+<li><code>Q: [B, H, T, Dh]</code></li>
+<li><code>K/V: [B, H_kv, T, Dh]</code>，按组广播到 <code>H</code> 个头。</li>
+</ul>
+</li>
+<li><p>KV Cache 占用（每 token）：<code>2 * L * H_kv * Dh * dtype_size</code>。相对 MHA 的缩放比约为 <code>H_kv / H</code>。</p>
+</li>
+</ul>
+<p>-#### 基本公式与符号说明</p>
+<p>以 GQA 为例（MQA 是 <code>H_kv=1</code> 的特例）：</p>
+<ul>
+<li>生成投影：<code>Q = X · W_Q</code>，<code>K = X · W_K</code>，<code>V = X · W_V</code></li>
+<li>头与组：<code>H</code> 为 Query 头数，<code>H_kv</code> 为 KV 头数，<code>group_size = H / H_kv</code></li>
+<li>重排形状：<code>Q: [B, H, T, D_h]</code>；<code>K/V: [B, H_kv, T, D_h]</code></li>
+<li>广播映射：将每一组 <code>K/V</code> 复制到其对应的 <code>group_size</code> 个 Query 头，得到 <code>K&#39;, V&#39;</code> 形状 <code>[B, H, T, D_h]</code></li>
+<li>注意力：<code>A = softmax((Q · K&#39;^T) / sqrt(D_h) + mask)</code>，<code>A: [B, H, T, T]</code></li>
+<li>聚合：<code>Y_head = A · V&#39;</code>，拼接：<code>Y = Concat(Y_head) · W_O</code></li>
+</ul>
+<p>符号与含义：</p>
+<ul>
+<li><p><code>H</code>&#x2F;<code>H_kv</code>&#x2F;<code>group_size</code>：Query 头数 &#x2F; KV 头数 &#x2F; 每组包含的 Query 头数</p>
+</li>
+<li><p><code>D_h</code>：每个 Query 头维度；通常与 K&#x2F;V 的维度一致</p>
+</li>
+<li><p><code>W_Q/W_K/W_V/W_O</code>：线性投影与输出矩阵</p>
+</li>
+<li><p><code>mask</code> 与 <code>sqrt(D_h)</code>：与 MHA 相同，分别做因果遮盖与缩放稳定化</p>
+</li>
+<li><p><code>KV Cache</code>：仅缓存 <code>H_kv</code> 组的 <code>K/V</code>，存储开销与带宽按比例下降</p>
+</li>
+<li><p>PyTorch 参考实现（以 GQA 为例，MQA 是令 <code>H_kv=1</code> 的特例）：</p>
+</li>
+</ul>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br></pre></td><td class="code"><pre><code class="hljs python"><span class="hljs-keyword">import</span> torch<br><span class="hljs-keyword">import</span> torch.nn <span class="hljs-keyword">as</span> nn<br><span class="hljs-keyword">import</span> torch.nn.functional <span class="hljs-keyword">as</span> F<br><br>B, T, D_model = <span class="hljs-number">2</span>, <span class="hljs-number">16</span>, <span class="hljs-number">1024</span><br>num_heads = <span class="hljs-number">16</span><br>num_kv_heads = <span class="hljs-number">4</span>  <span class="hljs-comment"># GQA: 4 组；若设为 1 即 MQA</span><br>head_dim = D_model // num_heads<br><br>x = torch.randn(B, T, D_model)<br>W_q = nn.Linear(D_model, num_heads * head_dim, bias=<span class="hljs-literal">False</span>)<br>W_k = nn.Linear(D_model, num_kv_heads * head_dim, bias=<span class="hljs-literal">False</span>)<br>W_v = nn.Linear(D_model, num_kv_heads * head_dim, bias=<span class="hljs-literal">False</span>)<br>W_o = nn.Linear(D_model, D_model, bias=<span class="hljs-literal">False</span>)<br><br>q = W_q(x).view(B, T, num_heads, head_dim).transpose(<span class="hljs-number">1</span>, <span class="hljs-number">2</span>)      <span class="hljs-comment"># [B, H,  T, Dh]</span><br>k = W_k(x).view(B, T, num_kv_heads, head_dim).transpose(<span class="hljs-number">1</span>, <span class="hljs-number">2</span>)   <span class="hljs-comment"># [B, Hkv,T, Dh]</span><br>v = W_v(x).view(B, T, num_kv_heads, head_dim).transpose(<span class="hljs-number">1</span>, <span class="hljs-number">2</span>)   <span class="hljs-comment"># [B, Hkv,T, Dh]</span><br><br>expand = num_heads // num_kv_heads<br>k = k.unsqueeze(<span class="hljs-number">2</span>).expand(B, num_kv_heads, expand, T, head_dim).reshape(B, num_heads, T, head_dim)<br>v = v.unsqueeze(<span class="hljs-number">2</span>).expand(B, num_kv_heads, expand, T, head_dim).reshape(B, num_heads, T, head_dim)<br><br>scores = torch.matmul(q, k.transpose(-<span class="hljs-number">2</span>, -<span class="hljs-number">1</span>)) / (head_dim ** <span class="hljs-number">0.5</span>)  <span class="hljs-comment"># [B, H, T, T]</span><br>causal_mask = torch.triu(torch.ones(T, T, dtype=torch.<span class="hljs-built_in">bool</span>), diagonal=<span class="hljs-number">1</span>)<br>scores = scores.masked_fill(causal_mask, <span class="hljs-built_in">float</span>(<span class="hljs-string">&#x27;-inf&#x27;</span>))<br>attn = F.softmax(scores, dim=-<span class="hljs-number">1</span>)<br>y = torch.matmul(attn, v).transpose(<span class="hljs-number">1</span>, <span class="hljs-number">2</span>).contiguous().view(B, T, D_model)<br>out = W_o(y)<br></code></pre></td></tr></table></figure>
+
+<ul>
+<li><p>工程实践要点：</p>
+<ul>
+<li>解码更快：减少了从 KV Cache 读取的通道与显存带宽占用；</li>
+<li>兼容性：很多开源权重已经内置 GQA&#x2F;MQA；推理框架（如 FlashAttention、vLLM 等）天然支持；</li>
+<li>质量影响：通常 MQA 最省但可能有更大质量回撤；GQA 是较稳妥折衷（例如 <code>H=16, H_kv=4</code>）。</li>
+</ul>
+</li>
+<li><p>小算例（fp16，<code>L=32, H=16, Dh=64</code>）：</p>
+<ul>
+<li>MHA：<code>2*32*16*64*2 = 131072 B ≈ 128 KiB / token</code></li>
+<li>GQA（<code>H_kv=4</code>）：约 <code>32 KiB / token</code>（节省 4×）</li>
+<li>MQA（<code>H_kv=1</code>）：约 <code>8 KiB / token</code>（节省 16×）</li>
+</ul>
+</li>
+</ul>
+<hr>
+<h3 id="MLA"><a href="#MLA" class="headerlink" title="MLA"></a>MLA</h3><p>MLA（Multi-Head Latent Attention）进一步在“维度”上压缩 K&#x2F;V：把 K&#x2F;V 投影到更低维的“latent”空间并缓存，仅在计算或输出阶段再通过小型“expander”还原或映射到输出空间。直观理解：在 GQA 减少“头数”的基础上，MLA 再减少“每头维度”。</p>
+<ul>
+<li><p>典型设计（简化描述）：</p>
+<ul>
+<li>先常规得到 <code>Q</code>；</li>
+<li>用较少的 latent 头与更小的维度得到 <code>K_lat, V_lat</code> 并写入 KV Cache；</li>
+<li>将 <code>Q</code> 线性投影到 latent 维度，与 <code>K_lat</code> 做注意力；</li>
+<li>用一个轻量的 <code>value_expander</code> 把 <code>V_lat</code> 的聚合结果还原回 <code>head_dim</code>；</li>
+<li>最终与各头拼接并线性映射输出。</li>
+</ul>
+</li>
+<li><p>形状示意：</p>
+<ul>
+<li><code>Q: [B, H, T, Dh]</code></li>
+<li><code>K_lat/V_lat: [B, H_lat, T, D_lat]</code>，<code>H_lat &lt;= H</code> 且 <code>D_lat &lt;&lt; Dh</code></li>
+<li><code>Q_lat = Q · W_q2lat</code>，<code>Q_lat: [B, H, T, D_lat]</code></li>
+</ul>
+</li>
+</ul>
+<p>-#### 基本公式与符号说明</p>
+<ul>
+<li>生成投影：<code>Q = X · W_Q</code>；<code>K_lat = X · W_&#123;K,lat&#125;</code>；<code>V_lat = X · W_&#123;V,lat&#125;</code></li>
+<li>维度压缩：<code>H_lat &lt;= H</code>，<code>D_lat &lt;&lt; D_h</code></li>
+<li>Query 降维：<code>Q_lat = Q · W_&#123;q→lat&#125;</code>，形状 <code>[B, H, T, D_lat]</code></li>
+<li>广播映射：将 <code>K_lat/V_lat</code> 按组广播到 <code>H</code> 个 Query 头，得到 <code>K_b/V_b: [B, H, T, D_lat]</code></li>
+<li>注意力：<code>A = softmax((Q_lat · K_b^T)/sqrt(D_lat) + mask)</code>，<code>A: [B, H, T, T]</code></li>
+<li>值还原：<code>Y_lat = A · V_b</code>，<code>Y_head = W_&#123;val→out&#125;(Y_lat)</code> 还原至 <code>D_h</code></li>
+<li>输出映射：<code>Y = Concat(Y_head) W_O</code></li>
+</ul>
+<p>符号与含义：</p>
+<ul>
+<li><p><code>H/H_lat</code>：Query 头数 &#x2F; latent KV 头数</p>
+</li>
+<li><p><code>D_h/D_lat</code>：每头维度 &#x2F; latent 维度</p>
+</li>
+<li><p><code>W_&#123;K,lat&#125;/W_&#123;V,lat&#125;</code>：将输入映射到 latent KV 空间的权重</p>
+</li>
+<li><p><code>W_&#123;q→lat&#125;</code>：将每个 Query 头从 <code>D_h</code> 映射到 <code>D_lat</code></p>
+</li>
+<li><p><code>W_&#123;val→out&#125;</code>：将 latent 聚合结果还原到 <code>D_h</code></p>
+</li>
+<li><p><code>sqrt(D_lat)</code>：缩放因子在 latent 维度上计算</p>
+</li>
+<li><p><code>KV Cache</code>：仅缓存 <code>K_lat/V_lat</code>，显存与带宽按 <code>(H_lat/H)·(D_lat/D_h)</code> 比例下降</p>
+</li>
+<li><p>PyTorch 参考实现（演示用，忽略分组卷积等更高效写法）：</p>
+</li>
+</ul>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br></pre></td><td class="code"><pre><code class="hljs python"><span class="hljs-keyword">import</span> torch<br><span class="hljs-keyword">import</span> torch.nn <span class="hljs-keyword">as</span> nn<br><span class="hljs-keyword">import</span> torch.nn.functional <span class="hljs-keyword">as</span> F<br><br>B, T, D_model = <span class="hljs-number">2</span>, <span class="hljs-number">16</span>, <span class="hljs-number">1024</span><br>H, H_lat = <span class="hljs-number">16</span>, <span class="hljs-number">4</span><br>Dh, D_lat = <span class="hljs-number">64</span>, <span class="hljs-number">16</span><br><br>x = torch.randn(B, T, D_model)<br>W_q = nn.Linear(D_model, H * Dh, bias=<span class="hljs-literal">False</span>)<br>W_k_lat = nn.Linear(D_model, H_lat * D_lat, bias=<span class="hljs-literal">False</span>)<br>W_v_lat = nn.Linear(D_model, H_lat * D_lat, bias=<span class="hljs-literal">False</span>)<br>W_q2lat = nn.Linear(Dh, D_lat, bias=<span class="hljs-literal">False</span>)      <span class="hljs-comment"># 将每个 head 的 Q 映射到 latent 维</span><br>W_val_expand = nn.Linear(D_lat, Dh, bias=<span class="hljs-literal">False</span>) <span class="hljs-comment"># 将 latent 聚合结果还原到 Dh</span><br>W_o = nn.Linear(D_model, D_model, bias=<span class="hljs-literal">False</span>)<br><br>q = W_q(x).view(B, T, H, Dh).transpose(<span class="hljs-number">1</span>, <span class="hljs-number">2</span>)                <span class="hljs-comment"># [B, H,    T, Dh]</span><br>k_lat = W_k_lat(x).view(B, T, H_lat, D_lat).transpose(<span class="hljs-number">1</span>, <span class="hljs-number">2</span>) <span class="hljs-comment"># [B, Hlat, T, Dlat]</span><br>v_lat = W_v_lat(x).view(B, T, H_lat, D_lat).transpose(<span class="hljs-number">1</span>, <span class="hljs-number">2</span>) <span class="hljs-comment"># [B, Hlat, T, Dlat]</span><br><br><span class="hljs-comment"># 将每个 Q 头映射到 latent 维</span><br>q_lat = W_q2lat(q)  <span class="hljs-comment"># [B, H, T, Dlat]</span><br><br><span class="hljs-comment"># 按组把 K_lat/V_lat 广播到 H 个头（H 是 H_lat 的倍数）</span><br>expand = H // H_lat<br>kb = k_lat.unsqueeze(<span class="hljs-number">2</span>).expand(B, H_lat, expand, T, D_lat).reshape(B, H, T, D_lat)<br>vb = v_lat.unsqueeze(<span class="hljs-number">2</span>).expand(B, H_lat, expand, T, D_lat).reshape(B, H, T, D_lat)<br><br>scores = torch.matmul(q_lat, kb.transpose(-<span class="hljs-number">2</span>, -<span class="hljs-number">1</span>)) / (D_lat ** <span class="hljs-number">0.5</span>)  <span class="hljs-comment"># [B, H, T, T]</span><br>causal_mask = torch.triu(torch.ones(T, T, dtype=torch.<span class="hljs-built_in">bool</span>), diagonal=<span class="hljs-number">1</span>)<br>scores = scores.masked_fill(causal_mask, <span class="hljs-built_in">float</span>(<span class="hljs-string">&#x27;-inf&#x27;</span>))<br>attn = F.softmax(scores, dim=-<span class="hljs-number">1</span>)<br><br>y_lat = torch.matmul(attn, vb)  <span class="hljs-comment"># [B, H, T, Dlat]</span><br>y = W_val_expand(y_lat).transpose(<span class="hljs-number">1</span>, <span class="hljs-number">2</span>).contiguous().view(B, T, H * Dh)<br>out = W_o(y)<br></code></pre></td></tr></table></figure>
+
+<ul>
+<li><p>为什么有效：</p>
+<ul>
+<li>KV Cache 写入与读取都发生在更小的 <code>H_lat × D_lat</code> 空间，显存与带宽显著下降；</li>
+<li>相比 MQA&#x2F;GQA，除了“少头”，还“少维”，进一步压缩；</li>
+<li>额外代价是多了两层小线性（<code>W_q2lat</code> 和 <code>W_val_expand</code>）。</li>
+</ul>
+</li>
+<li><p>KV Cache 占用（每 token）：<code>2 * L * H_lat * D_lat * dtype_size</code>。相对 MHA 的缩放比约为 <code>(H_lat/H) * (D_lat/Dh)</code>。</p>
+</li>
+<li><p>小算例（fp16，<code>L=32, H=16, Dh=64, H_lat=4, D_lat=16</code>）：<code>2*32*4*16*2 = 8192 B ≈ 8 KiB / token</code>，较 MHA 节省 16×，与 MQA 在此参数下相当，但带来更灵活的折衷空间。</p>
+</li>
+<li><p>工程注意：</p>
+<ul>
+<li>训练&#x2F;权重兼容：MLA 通常需要在训练时就引入相应投影与损失，纯推理时很难对“已训练的 MHA&#x2F;GQA 权重”直接替换；</li>
+<li>推理实现：需要推理引擎在 KV 写入&#x2F;读取路径上支持 latent 形状与广播；</li>
+<li>质量与速度：一般会在几乎不损失质量前提下进一步降显存；具体取决于 <code>H_lat, D_lat</code> 的配置与训练策略。</li>
+</ul>
+</li>
+</ul>
+<hr>
+<h3 id="工程实现：FlashAttention-与-Paged-Attention-的关系"><a href="#工程实现：FlashAttention-与-Paged-Attention-的关系" class="headerlink" title="工程实现：FlashAttention 与 Paged Attention 的关系"></a>工程实现：FlashAttention 与 Paged Attention 的关系</h3><p>这一节不引入新的注意力“机制”，而是解释两种几乎成为标配的工程实现如何与上文的 MHA&#x2F;MQA&#x2F;GQA&#x2F;MLA 协同：</p>
+<ul>
+<li><p>FlashAttention（FA）：一种 IO-aware 的精确 Softmax Attention 实现。通过块化（tiling）与在 SRAM&#x2F;寄存器中累积 <code>softmax</code> 的分子&#x2F;分母，减少 HBM 访问与中间张量的写回，从而显著降低显存占用与提高吞吐。它不改变数学公式，仅改变计算顺序与内存访问路径。</p>
+<ul>
+<li>输入&#x2F;输出：与标准注意力一致，可直接用于 MHA&#x2F;GQA&#x2F;MQA&#x2F;MLA 的打分与聚合阶段（需相应 kernel 支持 Q&#x2F;K&#x2F;V 的形状变体，如 <code>num_kv_heads ≤ num_heads</code>、<code>D_lat</code> 等）。</li>
+<li>Prefill 与 Decode：FA 通常提供变长序列的 prefill 接口（使用 <code>cu_seqlens</code>&#x2F;<code>block_table</code>）与带 KV Cache 的 decode 接口（<code>with_kvcache</code>）。</li>
+<li>实战建议：优先启用 FA；若有批量与形状限制，可回退到 eager 实现或按批分组。</li>
+</ul>
+</li>
+<li><p>Paged Attention（PA）：面向推理的 KV Cache 管理策略。将每条序列的 K&#x2F;V 缓存按固定大小分页（如 256 tokens 一页），用“块表（block table）”将逻辑连续映射到物理非连续显存页，结合“引用计数 + 写时复制”，实现前缀共享与低碎片化。</p>
+<ul>
+<li>角色定位：PA 主要解决“存什么、存在哪里、如何高效复用”的问题；</li>
+<li>与 FA 的关系：FA 负责“如何高效算”，PA 负责“如何高效存与取”。两者互补，经常一起使用：prefill 时通过 <code>block_table</code> 直接引用已存在的历史 K&#x2F;V；decode 时按 <code>slot_mapping</code> 精确写入新 token 的 K&#x2F;V 槽位，FA 的内核读取这些分页后的 K&#x2F;V 完成注意力计算。</li>
+</ul>
+</li>
+</ul>
+<p>小结：</p>
+<ul>
+<li>若把注意力看作“数学公式 × 工程实现 × 运行时存储”，则 MHA&#x2F;MQA&#x2F;GQA&#x2F;MLA 属于“公式&#x2F;架构”，FA 属于“高效算子的实现”，PA 属于“运行时的存储与复用”。在现代推理系统中，FA+PA 几乎是默认组合。</li>
+</ul>
+<p>实践清单：</p>
+<ul>
+<li>选择算子：优先使用 FlashAttention v2&#x2F;v3 提供的变长&#x2F;with-kvcache 接口。</li>
+<li>设计缓存：采用 Paged Attention 的分页 KV 设计（页大小常取 256），并实现前缀哈希&#x2F;共享。</li>
+<li>形状对齐：<ul>
+<li>GQA&#x2F;MQA：确保 <code>num_kv_heads</code> 与组广播在 kernel 支持集合内；</li>
+</ul>
+</li>
+<li>调度配合：prefill 优先、decode 稳态复用 CUDA Graph；block table 与 slot mapping 在两个阶段的构造方式不同，需要与内核接口对齐。</li>
+</ul>
+<p>参考文档：</p>
+<ul>
+<li>FlashAttention（论文）：<a target="_blank" rel="noopener" href="https://arxiv.org/abs/2205.14135">FlashAttention: Fast and Memory-Efficient Exact Attention with IO-Awareness</a></li>
+<li>FlashAttention-2（论文）：<a target="_blank" rel="noopener" href="https://arxiv.org/abs/2307.08691">FlashAttention-2: Faster Attention with Better Parallelism and Work Partitioning</a></li>
+<li>FlashAttention（实现仓库）：<a target="_blank" rel="noopener" href="https://github.com/HazyResearch/flash-attention">HazyResearch&#x2F;flash-attention</a></li>
+<li>PagedAttention（论文）：<a target="_blank" rel="noopener" href="https://arxiv.org/abs/2309.06180">Efficient Memory Management for LLM Serving with PagedAttention</a></li>
+<li>vLLM（实现仓库，含 PagedAttention）：<a target="_blank" rel="noopener" href="https://github.com/vllm-project/vllm">vllm-project&#x2F;vllm</a></li>
+</ul>
+<h3 id="对比、选型与实践建议"><a href="#对比、选型与实践建议" class="headerlink" title="对比、选型与实践建议"></a>对比、选型与实践建议</h3><ul>
+<li>指标对比（越小越省）：</li>
+</ul>
+<table>
+<thead>
+<tr>
+<th>方案</th>
+<th>KV Cache（&#x2F;token）</th>
+<th>带宽（decode）</th>
+<th>延迟</th>
+<th>兼容性</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>MHA</td>
+<td><code>~2 * L * H * Dh * dtype</code></td>
+<td>高</td>
+<td>中</td>
+<td>最强（默认）</td>
+</tr>
+<tr>
+<td>GQA</td>
+<td><code>~2 * L * H_kv * Dh * dtype</code></td>
+<td>中</td>
+<td>低</td>
+<td>强（广泛支持）</td>
+</tr>
+<tr>
+<td>MQA</td>
+<td><code>~2 * L * 1 * Dh * dtype</code></td>
+<td>低</td>
+<td>低</td>
+<td>强（很多模型）</td>
+</tr>
+<tr>
+<td>MLA</td>
+<td><code>~2 * L * H_lat * D_lat * dtype</code></td>
+<td>最低</td>
+<td>低</td>
+<td>需模型原生支持</td>
+</tr>
+</tbody></table>
+<ul>
+<li><p>选型建议：</p>
+<ul>
+<li>训练阶段：若追求推理效率，建议直接采用 GQA 或 MLA 的体系结构进行训练；</li>
+<li>只做推理：优先选用已发布的 GQA&#x2F;MQA 权重；若模型原生支持 MLA，优先开启；</li>
+<li>长上下文与低显存：GQA 是“稳妥省”，MLA 是“更省但需原生支持”，MQA 是“最省但可能牺牲更多质量”。</li>
+</ul>
+</li>
+<li><p>实战清单：</p>
+<ul>
+<li>计算你的 KV 预算：<code>bytes_per_token = 2 * L * H_kv * D_eff * dtype_size</code>（MHA&#x2F;GQA 的 <code>D_eff=Dh</code>，MLA 的 <code>D_eff=D_lat</code>）；</li>
+<li>结合推理引擎（如 vLLM&#x2F;nano-vLLM&#x2F;FlashAttention）确认是否支持 GQA&#x2F;MQA&#x2F;MLA 的张量形状；</li>
+<li>Prefill&#x2F;Decode 分离优化：Prefill 受算力约束，Decode 受带宽与 KV 形状影响更大；</li>
+<li>建议配合 Paged Attention 与 Prefix Caching 一起使用，以进一步压缩显存与提升吞吐。</li>
+</ul>
+</li>
+</ul>
+<hr>
+<h3 id="常见问题（FAQ）"><a href="#常见问题（FAQ）" class="headerlink" title="常见问题（FAQ）"></a>常见问题（FAQ）</h3><ul>
+<li><p>MQA 和 GQA 会不会影响模型质量？</p>
+<ul>
+<li>相比 MHA，理论上表达力减少。实践中 GQA（如 4 或 8 组）通常影响较小，MQA 可能更明显，需以评测为准。</li>
+</ul>
+</li>
+<li><p>MLA 与 GQA 的关系？</p>
+<ul>
+<li>MLA 可视作在“GQA 少头”的基础上再“降维”，两者可以叠加；若模型原生采用 MLA，则 KV Cache 维度与头数均更小。</li>
+</ul>
+</li>
+<li><p>这些优化需要改训练吗？</p>
+<ul>
+<li>GQA&#x2F;MQA 可直接在架构中更改并从头训练，或使用已有权重；MLA 通常需要在训练期就参与，否则难以在推理期无痛替换。</li>
+</ul>
+</li>
+</ul>
+<hr>
+<p>参考阅读（按关键词检索）：</p>
+<ul>
+<li>Scaled Dot-Product Attention, Multi-Head Attention（Transformer 原论文）</li>
+<li>Multi-Query Attention（MQA）与 Grouped-Query Attention（GQA）</li>
+<li>FlashAttention 与 Paged Attention（高效注意力实现）</li>
+<li>Multi-Head Latent Attention（MLA）与 KV Cache 压缩相关工作</li>
+<li>FlashAttention（实现与论文）：见上文“工程实现”章节参考链接</li>
+<li>PagedAttention（论文与实现）：见上文“工程实现”章节参考链接</li>
+</ul>
+
+                
+              </div>
+            
+            <hr/>
+            <div>
+              <div class="post-metas my-3">
+  
+  
+</div>
+
+
+              
+  
+
+  <div class="license-box my-3">
+    <div class="license-title">
+      <div>attention</div>
+      <div>https://scratch-ml.github.io/2025/09/22/attention/</div>
+    </div>
+    <div class="license-meta">
+      
+        <div class="license-meta-item">
+          <div>作者</div>
+          <div>MingliangLi</div>
+        </div>
+      
+      
+        <div class="license-meta-item license-meta-date">
+          <div>发布于</div>
+          <div>2025年9月22日</div>
+        </div>
+      
+      
+      
+        <div class="license-meta-item">
+          <div>许可协议</div>
+          <div>
+            
+              
+              
+                <a class="print-no-link" target="_blank" href="https://creativecommons.org/licenses/by/4.0/">
+                  <span class="hint--top hint--rounded" aria-label="BY - 署名">
+                    <i class="iconfont icon-cc-by"></i>
+                  </span>
+                </a>
+              
+            
+          </div>
+        </div>
+      
+    </div>
+    <div class="license-icon iconfont"></div>
+  </div>
+
+
+
+              
+            </div>
+
+            
+          </article>
+        </div>
+      </div>
+    </div>
+
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+  <aside class="sidebar" style="margin-left: -1rem">
+    <div id="toc">
+  <p class="toc-header">
+    <i class="iconfont icon-list"></i>
+    <span>目录</span>
+  </p>
+  <div class="toc-body" id="toc-body"></div>
+</div>
+
+
+
+  </aside>
+
+
+    </div>
+  </div>
+</div>
+
+
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+  
+  
+
+
+
+
+
+
+
+
+
+    
+
+    
+      <a id="scroll-top-button" aria-label="TOP" href="#" role="button">
+        <i class="iconfont icon-arrowup" aria-hidden="true"></i>
+      </a>
+    
+
+    
+      <div class="modal fade" id="modalSearch" tabindex="-1" role="dialog" aria-labelledby="ModalLabel"
+     aria-hidden="true">
+  <div class="modal-dialog modal-dialog-scrollable modal-lg" role="document">
+    <div class="modal-content">
+      <div class="modal-header text-center">
+        <h4 class="modal-title w-100 font-weight-bold">搜索</h4>
+        <button type="button" id="local-search-close" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body mx-3">
+        <div class="md-form mb-5">
+          <input type="text" id="local-search-input" class="form-control validate">
+          <label data-error="x" data-success="v" for="local-search-input">关键词</label>
+        </div>
+        <div class="list-group" id="local-search-result"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+    
+
+    
+  </main>
+
+  <footer>
+    <div class="footer-inner">
+  
+    <div class="footer-content">
+       <a href="https://hexo.io" target="_blank" rel="nofollow noopener"><span>Hexo</span></a> <i class="iconfont icon-love"></i> <a href="https://github.com/fluid-dev/hexo-theme-fluid" target="_blank" rel="nofollow noopener"><span>Fluid</span></a> 
+    </div>
+  
+  
+  
+</div>
+
+  </footer>
+
+  <!-- Scripts -->
+  
+  <script  src="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.js" ></script>
+  <link  rel="stylesheet" href="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.css" />
+
+  <script>
+    NProgress.configure({"showSpinner":false,"trickleSpeed":100})
+    NProgress.start()
+    window.addEventListener('load', function() {
+      NProgress.done();
+    })
+  </script>
+
+
+<script  src="https://lib.baomitu.com/jquery/3.6.4/jquery.min.js" ></script>
+<script  src="https://lib.baomitu.com/twitter-bootstrap/4.6.1/js/bootstrap.min.js" ></script>
+<script  src="/js/events.js" ></script>
+<script  src="/js/plugins.js" ></script>
+
+
+
+
+
+  
+    <script  src="/js/img-lazyload.js" ></script>
+  
+
+
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/tocbot/4.20.1/tocbot.min.js', function() {
+    var toc = jQuery('#toc');
+    if (toc.length === 0 || !window.tocbot) { return; }
+    var boardCtn = jQuery('#board-ctn');
+    var boardTop = boardCtn.offset().top;
+
+    window.tocbot.init(Object.assign({
+      tocSelector     : '#toc-body',
+      contentSelector : '.markdown-body',
+      linkClass       : 'tocbot-link',
+      activeLinkClass : 'tocbot-active-link',
+      listClass       : 'tocbot-list',
+      isCollapsedClass: 'tocbot-is-collapsed',
+      collapsibleClass: 'tocbot-is-collapsible',
+      scrollSmooth    : true,
+      includeTitleTags: true,
+      headingsOffset  : -boardTop,
+    }, CONFIG.toc));
+    if (toc.find('.toc-list-item').length > 0) {
+      toc.css('visibility', 'visible');
+    }
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('tocbot' in window) {
+        tocbot.refresh();
+        var toc = jQuery('#toc');
+        if (toc.length === 0 || !tocbot) {
+          return;
+        }
+        if (toc.find('.toc-list-item').length > 0) {
+          toc.css('visibility', 'visible');
+        }
+      }
+    });
+  });
+</script>
+
+
+  <script src=https://lib.baomitu.com/clipboard.js/2.0.11/clipboard.min.js></script>
+
+  <script>Fluid.plugins.codeWidget();</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/anchor-js/5.0.0/anchor.min.js', function() {
+    window.anchors.options = {
+      placement: CONFIG.anchorjs.placement,
+      visible  : CONFIG.anchorjs.visible
+    };
+    if (CONFIG.anchorjs.icon) {
+      window.anchors.options.icon = CONFIG.anchorjs.icon;
+    }
+    var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+    var res = [];
+    for (var item of el) {
+      res.push('.markdown-body > ' + item.trim());
+    }
+    if (CONFIG.anchorjs.placement === 'left') {
+      window.anchors.options.class = 'anchorjs-link-left';
+    }
+    window.anchors.add(res.join(', '));
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('anchors' in window) {
+        anchors.removeAll();
+        var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+        var res = [];
+        for (var item of el) {
+          res.push('.markdown-body > ' + item.trim());
+        }
+        if (CONFIG.anchorjs.placement === 'left') {
+          anchors.options.class = 'anchorjs-link-left';
+        }
+        anchors.add(res.join(', '));
+      }
+    });
+  });
+</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.js', function() {
+    Fluid.plugins.fancyBox();
+  });
+</script>
+
+
+  <script>Fluid.plugins.imageCaption();</script>
+
+  
+      <script>
+        if (!window.MathJax) {
+          window.MathJax = {
+            tex    : {
+              inlineMath: { '[+]': [['$', '$']] }
+            },
+            loader : {
+              load: ['ui/lazy']
+            },
+            options: {
+              renderActions: {
+                insertedScript: [200, () => {
+                  document.querySelectorAll('mjx-container').forEach(node => {
+                    let target = node.parentNode;
+                    if (target.nodeName.toLowerCase() === 'li') {
+                      target.parentNode.classList.add('has-jax');
+                    }
+                  });
+                }, '', false]
+              }
+            }
+          };
+        } else {
+          MathJax.startup.document.state(0);
+          MathJax.texReset();
+          MathJax.typeset();
+          MathJax.typesetPromise();
+        }
+
+        Fluid.events.registerRefreshCallback(function() {
+          if ('MathJax' in window && MathJax.startup.document && typeof MathJax.startup.document.state === 'function') {
+            MathJax.startup.document.state(0);
+            MathJax.texReset();
+            MathJax.typeset();
+            MathJax.typesetPromise();
+          }
+        });
+      </script>
+    
+
+  <script  src="https://lib.baomitu.com/mathjax/3.2.2/es5/tex-mml-chtml.js" ></script>
+
+  <script  src="/js/local-search.js" ></script>
+
+
+
+
+
+<!-- 主题的启动项，将它保持在最底部 -->
+<!-- the boot of the theme, keep it at the bottom -->
+<script  src="/js/boot.js" ></script>
+
+
+  
+
+  <noscript>
+    <div class="noscript-warning">博客在允许 JavaScript 运行的环境下浏览效果更佳</div>
+  </noscript>
+</body>
+</html>
